@@ -53,9 +53,6 @@ def validate():
     file.write(data)
     file.close()
 
-
-
-
 def ac_token():
     mpesa_auth_url='https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
     
