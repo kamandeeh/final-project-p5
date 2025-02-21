@@ -1,10 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from datetime import datetime
-from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, SubmitField
-from wtforms.validators import DataRequired, Length
-
 
 # Initialize extensions
 metadata = MetaData()
@@ -77,21 +73,3 @@ class TokenBlocklist(db.Model):
     jti = db.Column(db.String(36), nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False)
 
-class MpesaTransactionForm(FlaskForm):
-    """Form class for Mpesa transaction data."""
-    full_name = StringField('Full Name', validators=[DataRequired(), Length(max=50)])
-    phone_number = IntegerField('Phone Number', validators=[DataRequired()])
-    amount = IntegerField('Amount', validators=[DataRequired()])
-    reference = StringField('Reference', validators=[DataRequired()])
-    submit = SubmitField('Submit')
-
-class MpesaTransaction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String(50), nullable=True)
-    phone_number = db.Column(db.String(13), nullable=False)
-    amount = db.Column(db.Integer, nullable=False)
-    reference = db.Column(db.String(255), nullable=False)
-
-    def __repr__(self):
-        return f"MpesaTransaction(id={self.id}, full_name='{self.full_name}', "\
-                f"phone_number='{self.phone_number}', amount={self.amount})"
