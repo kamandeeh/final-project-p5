@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-6">
         {/* Left Section */}
         <div className="mb-6 md:mb-0">
-          <h1 className="text-2xl font-bold">BLAH Company</h1>
+          <h1 className="text-2xl font-bold">BLAH Foundation</h1>
           <p className="mt-2 text-gray-400">Join us in advocating for the rights of refugees.</p>
         </div>
         
@@ -28,7 +28,7 @@ const Footer = () => {
           </div>
           <div className="mb-4">
             <h3 className="font-semibold">Email</h3>
-            <p className="text-gray-400">hello@reallygreatsite.com</p>
+            <p className="text-gray-400">blahfoundation@gmail.com</p>
           </div>
           <div>
             <h3 className="font-semibold">Phone</h3>

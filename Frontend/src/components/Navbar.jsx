@@ -39,6 +39,8 @@ const Navbar = () => {
               </ul>
             )}
           </li>
+          
+          <li><a href="/profile">Profile</a></li>
 
           <li><Link className="hover:text-gray-400" to="/contact">Contact Us</Link></li>
           {user ? (
