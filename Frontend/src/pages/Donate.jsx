@@ -1,15 +1,14 @@
 import React from "react";
 
 const Donate = () => {
+
+  const donateRef = useRef(null);
+  
   return (
-    <div className="container mx-auto p-4 text-center">
-      <h1 className="text-3xl font-bold">Donate</h1>
-      <ul className="mt-4">
-        <li className="bg-gray-200 p-2 rounded mb-2">Donation Drive for Refugees</li>
-        <li className="bg-gray-200 p-2 rounded mb-2">World Refugee Day Panel</li>
-        <li className="bg-gray-200 p-2 rounded">Cultural Exchange Program</li>
-      </ul>
-    </div>
+    <section ref={donateRef} className="p-12 text-center bg-gray-500">
+    <h2 className="text-4xl font-bold">Donate</h2>
+    <p className="mt-4 text-gray-700">Support our mission.</p>
+  </section>
   );
 };
 

@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, MapPin, Phone, Camera } from 'lucide-react';
 
-// Assuming you will fetch this from an API (example with useState and useEffect)
+
 const Profile = () => {
   const [profile, setProfile] = useState(null);
 
-  // This is a mock function to simulate fetching profile data from an API
+  
   useEffect(() => {
-    // Example data fetching logic
-    // Replace this with actual API call
+   
     const fetchProfileData = async () => {
-      const response = await fetch('/api/profile'); // Adjust the API endpoint
+      const response = await fetch('/api/profile'); 
       const data = await response.json();
       setProfile(data);
     };

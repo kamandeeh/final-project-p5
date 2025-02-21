@@ -52,3 +52,5 @@ def logout():
     db.session.add(TokenBlocklist(jti=jti, created_at=now))
     db.session.commit()
     return jsonify({"success":"Logged out successfully"})
+
+
