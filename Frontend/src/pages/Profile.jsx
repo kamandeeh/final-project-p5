@@ -1,14 +1,12 @@
-import { UserContext } from "../context/usercontext";
-import { useContext } from "react";
+import React from "react";
 
 const Profile = () => {
   return (
-    <section className="profile">
-      <h2>Profile</h2>
-      <p>Manage your account details here.</p>
-    </section>
+    <div className="container mx-auto p-4 text-center">
+      <h1 className="text-3xl font-bold">My Profile</h1>
+      <p>Welcome to your profile page.</p>
+    </div>
   );
 };
+
 export default Profile;
-
-
