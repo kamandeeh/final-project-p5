@@ -1,6 +1,6 @@
 from flask import jsonify,request,Blueprint
 from models import db,User
-from werkzeug.security import generate_password_hash
+
 
 user_bp = Blueprint("user_bp", __name__)
 
@@ -40,24 +40,3 @@ def get_user(user_id):
     return jsonify({"error": "User not found"}), 404
 
 
-@user_bp.route('/users', methods=['POST'])
-def add_users():
-    data = request.get_json()
-    username = data['username']
-    email = data['email']
-    password_hash = generate_password_hash(data['password_hash'])
-
-    check_username = User.query.filter_by(username=username).first()
-    check_email = User.query.filter_by(email=email).first()
-
-    print("Email ",check_email)
-    print("Username",check_username)
-    if check_username or check_email:
-        return jsonify({"error":"Username/email exists"}),406
-
-    else:
-        new_user = User(username=username, email=email, password_hash=password_hash)
-        db.session.add(new_user)
-        db.session.commit()
-        return jsonify({"msg":"User saved successfully!"}), 201
-    

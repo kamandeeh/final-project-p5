@@ -4,6 +4,7 @@ from models import db,TokenBlocklist
 from datetime import timedelta
 from flask_jwt_extended import JWTManager
 import os
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -15,6 +16,7 @@ app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "uhdhfjhfjksddjhdyd")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] =  timedelta(hours=1)
 jwt = JWTManager(app)
 jwt.init_app(app)
+CORS(app)
 
 from views import *
 
@@ -32,4 +34,5 @@ def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
 
     return token is not None
 
+print(app.url_map)
 
