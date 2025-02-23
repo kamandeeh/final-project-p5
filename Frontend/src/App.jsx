@@ -2,12 +2,12 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./context/UserContext"; 
 import Home from "./pages/Home";
-import WhoWeAre from "./pages/WhoWeAre";
-import AboutUs from "./pages/Aboutus";
+import Aboutus from "./pages/Aboutus";
 import ManagementTeam from "./pages/ManagmentTeam";
 import GetInvolved from "./pages/Getinvolved";
 import Records from "./pages/Records";
 import Donate from "./pages/Donate";
+import WhoWeAre from "./pages/WhoWeAre";
 import Contactus from "./pages/Contact";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
@@ -24,7 +24,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/who-we-are" element={<WhoWeAre />} />
-          <Route path="/who-we-are/about-us" element={<AboutUs />} />
+          <Route path="/who-we-are/about-us" element={<Aboutus />} />
           <Route path="/who-we-are/management-team" element={<ManagementTeam />} />
           <Route path="/get-involved" element={<GetInvolved />} />
           <Route path="/get-involved/records" element={<Records />} />
