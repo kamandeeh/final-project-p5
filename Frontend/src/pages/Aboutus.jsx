@@ -4,48 +4,60 @@ const AboutUs = () => {
   const [showMore, setShowMore] = useState(false);
 
   return (
-    <div className="container mx-auto p-4 text-center">
-      <h1 className="text-3xl font-bold">About Us</h1>
-      <p className="text-gray-600 mt-2">
-        Blah Company is a forward-thinking organization dedicated to addressing some of the world's most pressing challenges,
-        including poverty eradication, employment generation, and social integration. Our mission is to contribute to the
-        creation of an international community that fosters secure, just, free, and harmonious societies. We believe in offering
-        opportunities and higher standards of living for all, ensuring that no one is left behind.
-      </p>
-      
+    <div className="container py-5">
+      <div className="text-center mb-4">
+        <h1 className="display-4 fw-bold">About Us</h1>
+        <p className="text-muted lead">
+          Blah Foundation is committed to eradicating poverty, generating employment, and promoting social integration.
+        </p>
+      </div>
+
+      <div className="row justify-content-center">
+        <div className="col-lg-8">
+          <p className="text-secondary">
+            Our mission is to foster a secure, just, and inclusive society by creating opportunities and raising living standards.
+            We are dedicated to ensuring that no one is left behind.
+          </p>
+        </div>
+      </div>
+
       {showMore ? (
-        <>
-          <h2 className="text-2xl font-bold mt-4">Our Core Focus Areas:</h2>
-          <ul className="text-gray-600 mt-2">
-            <li><strong>Poverty Eradication:</strong> We implement sustainable solutions that address the root causes of poverty.</li>
-            <li><strong>Employment Generation:</strong> By creating job opportunities and supporting entrepreneurship, we empower individuals.</li>
-            <li><strong>Social Integration:</strong> We strive to build inclusive societies where everyone has the opportunity to thrive.</li>
-          </ul>
+        <div className="row justify-content-center mt-4">
+          <div className="col-lg-8">
+            <h2 className="h4 fw-bold">Our Core Focus Areas</h2>
+            <ul className="list-group list-group-flush mb-3">
+              <li className="list-group-item"><strong>Poverty Eradication:</strong> Implementing sustainable solutions for long-term impact.</li>
+              <li className="list-group-item"><strong>Employment Generation:</strong> Creating job opportunities and supporting entrepreneurs.</li>
+              <li className="list-group-item"><strong>Social Integration:</strong> Building inclusive communities for all.</li>
+            </ul>
 
-          <h2 className="text-2xl font-bold mt-4">Our Vision:</h2>
-          <p className="text-gray-600 mt-2">To create a world where everyone has the opportunity to live a life of dignity, free from poverty and inequality.</p>
+            <h2 className="h4 fw-bold">Our Vision</h2>
+            <p className="text-secondary">A world where everyone has the opportunity to live with dignity, free from poverty and inequality.</p>
 
-          <h2 className="text-2xl font-bold mt-4">Our Mission:</h2>
-          <p className="text-gray-600 mt-2">To develop and implement innovative solutions that address the root causes of poverty, generate employment, and promote social integration.</p>
-          
-          <h2 className="text-2xl font-bold mt-4">Our Values:</h2>
-          <ul className="text-gray-600 mt-2">
-            <li><strong>Equity:</strong> We believe in equal opportunities for all.</li>
-            <li><strong>Sustainability:</strong> Our solutions are designed to be sustainable and long-lasting.</li>
-            <li><strong>Inclusivity:</strong> We are committed to creating inclusive communities where everyone has a voice.</li>
-          </ul>
-          
-          <h2 className="text-2xl font-bold mt-4">Our Approach:</h2>
-          <ul className="text-gray-600 mt-2">
-            <li><strong>Innovation:</strong> Leveraging cutting-edge technology to solve social problems.</li>
-            <li><strong>Collaboration:</strong> Working with governments, NGOs, and local communities.</li>
-            <li><strong>Empowerment:</strong> Focusing on empowering individuals and communities for self-development.</li>
-          </ul>
-        </>
+            <h2 className="h4 fw-bold">Our Mission</h2>
+            <p className="text-secondary">To develop and implement innovative solutions addressing poverty, employment, and social inclusion.</p>
+
+            <h2 className="h4 fw-bold">Our Values</h2>
+            <ul className="list-group list-group-flush mb-3">
+              <li className="list-group-item"><strong>Equity:</strong> Advocating for equal opportunities.</li>
+              <li className="list-group-item"><strong>Sustainability:</strong> Creating long-lasting solutions.</li>
+              <li className="list-group-item"><strong>Inclusivity:</strong> Ensuring everyone has a voice.</li>
+            </ul>
+
+            <h2 className="h4 fw-bold">Our Approach</h2>
+            <ul className="list-group list-group-flush">
+              <li className="list-group-item"><strong>Innovation:</strong> Using technology to drive social change.</li>
+              <li className="list-group-item"><strong>Collaboration:</strong> Partnering with governments, NGOs, and communities.</li>
+              <li className="list-group-item"><strong>Empowerment:</strong> Fostering self-development and independence.</li>
+            </ul>
+          </div>
+        </div>
       ) : (
-        <button className="mt-4 bg-blue-500 text-white px-4 py-2 rounded" onClick={() => setShowMore(true)}>
-          Read more from Our Impact
-        </button>
+        <div className="text-center mt-4">
+          <button className="btn btn-primary" onClick={() => setShowMore(true)}>
+            Learn More
+          </button>
+        </div>
       )}
     </div>
   );

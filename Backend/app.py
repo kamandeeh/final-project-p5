@@ -7,6 +7,7 @@ import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config["SECRET_KEY"] = "zuruelkamandepovertylineproject"
 db.init_app(app)
 migrate = Migrate(app, db)
 
@@ -24,6 +25,8 @@ app.register_blueprint(record_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(mpesa_bp)
+app.register_blueprint(social_bp)
+app.register_blueprint(github_blueprint, url_prefix='/github_login')
 
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:

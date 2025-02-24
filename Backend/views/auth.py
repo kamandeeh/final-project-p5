@@ -1,6 +1,6 @@
 from flask import jsonify, request, Blueprint
 from models import db, User, TokenBlocklist
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash,generate_password_hash
 from datetime import datetime
 from datetime import timezone
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
@@ -54,3 +54,23 @@ def logout():
     return jsonify({"success":"Logged out successfully"})
 
 
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data['username']
+    email = data['email']
+    password_hash = generate_password_hash(data['password_hash'])
+
+    check_username = User.query.filter_by(username=username).first()
+    check_email = User.query.filter_by(email=email).first()
+
+    print("Email ",check_email)
+    print("Username",check_username)
+    if check_username or check_email:
+        return jsonify({"error":"Username/email exists"}),406
+
+    else:
+        new_user = User(username=username, email=email, password_hash=password_hash)
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({"msg":"User saved successfully!"}), 201

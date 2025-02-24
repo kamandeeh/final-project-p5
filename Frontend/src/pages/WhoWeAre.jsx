@@ -1,4 +1,6 @@
+
 import React from "react";
+
 const WhoWeAre = () => {
   return (
     <section ref={aboutRef} className="p-12 text-center bg-gray-100">
@@ -10,4 +12,5 @@ const WhoWeAre = () => {
       </section>
   );
 };
+
 export default WhoWeAre;
