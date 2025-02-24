@@ -1,26 +1,23 @@
-from flask import jsonify, request, Blueprint, url_for, redirect
+from flask import jsonify, request, Blueprint, url_for, redirect, session, abort
 from authlib.integrations.flask_client import OAuth
-import requests
+from flask_dance.contrib.github import make_github_blueprint, github
 from flask_jwt_extended import create_access_token
+import requests
 import os
 from dotenv import load_dotenv
-from models import db,User
+from models import db, User
+import json
 
 load_dotenv()
-auth_bp = Blueprint("auth_bp", __name__)
+social_bp = Blueprint("social_bp", __name__)
 
 # OAuth Configuration
 oauth = OAuth()
 
-# OAuth Configuration
-GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
-GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
+GOOGLE_CLIENT_ID = "787148443112-mnl2dqtoevqgnqasod1str5al6f1piiq.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
 
-# Register Google OAuth
 oauth.register(
     "google",
     client_id=GOOGLE_CLIENT_ID,
@@ -31,91 +28,127 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
-# ----------------- GOOGLE AUTHENTICATION -----------------
 
-@auth_bp.route("/auth/google")
+github_blueprint = make_github_blueprint(
+    client_id="Ov23lirLMXX8vKuDbf56",
+    client_secret="32fc2bcef4338822c55ee4b14995ac699683bf61",
+    scope="user:email"
+)
+
+
+def login_is_required(function):
+    def wrapper(*args, **kwargs):
+        if "google_id" not in session:
+            return abort(401)  # Unauthorized
+        return function(*args, **kwargs)
+    return wrapper
+
+@social_bp.route("/auth/google/login")
 def google_login():
-    return oauth.google.authorize_redirect(url_for("auth_bp.google_callback", _external=True))
+    return oauth.google.authorize_redirect("http://127.0.0.1:5000/auth/google/callback")
 
 
-@auth_bp.route("/auth/google/callback")
+@social_bp.route("/auth/google/callback")
 def google_callback():
     try:
         token = oauth.google.authorize_access_token()
         user_info = token.get("userinfo")
+
         if not user_info:
             return jsonify({"error": "Failed to fetch user info"}), 400
 
-        email = user_info["email"]
-        user = User.query.filter_by(email=email).first()
+        email = user_info.get("email")
+        google_id = user_info.get("sub")  
+        username = user_info.get("name")
 
+        session["google_id"] = google_id
+        session["email"] = email
+        session["username"] = username
+
+    
+        user = User.query.filter_by(email=email).first()
         if not user:
-            user = User(username=user_info["name"], email=email)
+            user = User(username=username, email=email, google_id=google_id)
             db.session.add(user)
             db.session.commit()
 
         jwt_token = create_access_token(identity=user.id)
-        return jsonify({"access_token": jwt_token, "user": user_info})
+
+        return jsonify({"message": "Login successful", "access_token": jwt_token, "user": user_info})
 
     except Exception as e:
         return jsonify({"error": "Google authentication failed", "details": str(e)}), 500
 
+@social_bp.route("/auth/google/logout")
+def google_logout():
+    session.clear()
+    return jsonify({"message": "Logged out successfully!"})
 
-# ----------------- GITHUB AUTHENTICATION -----------------
+@social_bp.route("/auth/google/protected_area")
+@login_is_required
+def google_protected_area():
+    return jsonify({
+        "message": "Welcome to the protected area!",
+        "user": {
+            "google_id": session.get("google_id"),
+            "email": session.get("email"),
+            "username": session.get("username"),
+        }
+    })
 
-@auth_bp.route("/auth/github")
+@social_bp.route("/auth/github/login")
 def github_login():
-    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&scope=user:email"
-    return redirect(github_auth_url)
+    if not github.authorized:
+        return redirect(url_for('github.login'))
+    else:
+        account_info = github.get('/user')
+        if account_info.ok:
+            account_info_json = account_info.json()
+            return '<h1>Your Github name is {}'.format(account_info_json['login'])
 
+    return '<h1>Request failed!</h1>'
 
-@auth_bp.route("/auth/github/callback")
+@social_bp.route("/auth/github/callback")
 def github_callback():
-    code = request.args.get("code")
-    if not code:
-        return jsonify({"error": "Authorization code is required"}), 400
+    if not github.authorized:
+        return jsonify({"error": "GitHub authorization failed"}), 401
 
-    token_response = requests.post(
-        "https://github.com/login/oauth/access_token",
-        headers={
-            "Accept": "application/json",
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        data={
-            "client_id": GITHUB_CLIENT_ID,
-            "client_secret": GITHUB_CLIENT_SECRET,
-            "code": code,
-        },
-    )
+    # Get user information from GitHub
+    account_info = github.get("/user")
+    user_info = account_info.json()
+    user_id = user_info['id']
+    email = user_info.get("email")
 
-    token_data = token_response.json()
-    access_token = token_data.get("access_token")
-    if not access_token:
-        return jsonify({"error": "Failed to authenticate with GitHub"}), 400
-
-    # Fetch user info from GitHub
-    user_response = requests.get(
-        "https://api.github.com/user",
-        headers={"Authorization": f"token {access_token}"},
-    )
-    user_data = user_response.json()
-
-    # Fetch user's primary email
-    email = user_data.get("email")
     if not email:
-        email_response = requests.get(
-            "https://api.github.com/user/emails",
-            headers={"Authorization": f"token {access_token}"},
-        )
-        emails = email_response.json()
-        primary_email = next((e["email"] for e in emails if e.get("primary")), None)
-        email = primary_email or f"github_{user_data['id']}@example.com"
+        email_list = github.get(f"/users/{user_id}/emails").json()
+        email = next((e["email"] for e in email_list if e.get("primary") and e.get("verified")), None)
+
+    if not email:
+        return jsonify({"error": "GitHub account has no public email"}), 400
 
     user = User.query.filter_by(email=email).first()
     if not user:
-        user = User(username=user_data["login"], email=email)
+        user = User(username=user_info["login"], email=email, github_id=user_info["id"])
         db.session.add(user)
         db.session.commit()
 
     jwt_token = create_access_token(identity=user.id)
-    return jsonify({"access_token": jwt_token, "user": user_data})
+
+    return jsonify({"message": "GitHub login successful", "access_token": jwt_token, "user": user_info})
+
+
+@social_bp.route("/auth/github/logout")
+def github_logout():
+    session.clear()
+    return jsonify({"message": "Logged out from GitHub successfully!"})
+
+@social_bp.route("/")
+def index():
+    return jsonify({
+        "message": "Welcome to the OAuth Demo",
+        "login_google": url_for("social_bp.google_login", _external=True),
+        "login_github": url_for("github.login", _external=True),
+        "logout_google": url_for("social_bp.google_logout", _external=True),
+        "logout_github": url_for("social_bp.github_logout", _external=True),
+        "protected_area_google": url_for("social_bp.google_protected_area", _external=True),
+    })
