@@ -5,7 +5,8 @@ import { useUser } from "../context/UserContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
-const GITHUB_CLIENT_ID = "Ov23lirLMXX8vKuDbf56";
+
+const GITHUB_CLIENT_ID =os.getenv("GITHUB_CLIENT_ID");
 const GOOGLE_CLIENT_ID = "787148443112-mnl2dqtoevqgnqasod1str5al6f1piiq.apps.googleusercontent.com";
 
 const Login = () => {
