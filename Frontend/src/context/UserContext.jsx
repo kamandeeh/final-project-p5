@@ -1,22 +1,22 @@
-import { createContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { createContext, useState, useEffect, useContext } from "react";
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   // Check if user is already logged in
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
+
       if (token) {
         try {
           const response = await fetch("http://127.0.0.1:5000/current_user", {
             headers: { Authorization: `Bearer ${token}` },
           });
+
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);
@@ -30,22 +30,24 @@ export const UserProvider = ({ children }) => {
       }
       setLoading(false);
     };
+
     fetchUser();
   }, []);
 
   // Register a new user
-  const register = async (userData) => {
+  const register = async (userData, navigate) => {
     try {
       const response = await fetch("http://127.0.0.1:5000/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
+
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("token", data.token);
         setUser(data.user);
-        navigate("/dashboard");
+        navigate("/dashboard"); // ✅ Navigate after successful registration
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -53,18 +55,19 @@ export const UserProvider = ({ children }) => {
   };
 
   // Login user
-  const login = async (credentials) => {
+  const login = async (credentials, navigate) => {
     try {
       const response = await fetch("http://127.0.0.1:5000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
       });
+
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("token", data.token);
         setUser(data.user);
-        navigate("/dashboard");
+        navigate("/dashboard"); // ✅ Navigate after successful login
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -72,10 +75,10 @@ export const UserProvider = ({ children }) => {
   };
 
   // Logout user
-  const logout = () => {
+  const logout = (navigate) => {
     localStorage.removeItem("token");
     setUser(null);
-    navigate("/login");
+    if (navigate) navigate("/login"); // ✅ Ensure navigation only if function was called with `navigate`
   };
 
   return (
@@ -85,4 +88,4 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-export default UserContext;
+export const useUser = () => useContext(UserContext);

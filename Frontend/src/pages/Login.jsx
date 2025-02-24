@@ -6,7 +6,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 const GITHUB_CLIENT_ID = "Ov23lirLMXX8vKuDbf56";
-const GOOGLE_CLIENT_ID = "787148443112-9520vrv4jpljuuhtg0et7r2bp7emln30.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "787148443112-mnl2dqtoevqgnqasod1str5al6f1piiq.apps.googleusercontent.com";
 
 const Login = () => {
   const { login } = useUser();
@@ -14,7 +14,7 @@ const Login = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectPath = new URLSearchParams(location.search).get("redirect") || "/profile";
+  const redirectPath = new URLSearchParams(location.search).get("redirect") || "/";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -50,8 +50,9 @@ const Login = () => {
   };
 
   const handleGitHubLogin = () => {
-    window.location.href = `http://127.0.0.1:5000/auth/github`;
+    window.location.href = "http://127.0.0.1:5000/auth/github/login";
   };
+  
 
   return (
     <div

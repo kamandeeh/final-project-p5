@@ -49,15 +49,15 @@ const Signup = () => {
   };
 
   const handleGitHubLogin = () => {
-    window.location.href = "http://127.0.0.1:5000/api/auth/github";
+    window.location.href = "http://127.0.0.1:5000/auth/github/login";
   };
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100" style={{
-        background: "linear-gradient(to right, #4682B4, #5A9BD5)", 
+        background: "linear-gradient(to right, #2FC, #e1EC)", 
       }}>
-      <div className="card shadow p-4 bg-white" style={{ width: "22rem", borderRadius: "10px", background: "linear-gradient(to right, #2FC, #e1EC)" }}>
-        <h2 className="text-center mb-3 text-light">Sign Up</h2>
+      <div className="card shadow p-4 bg-white" style={{ width: "22rem", borderRadius: "10px"}}>
+        <h2 className="text-center mb-3 text-black">Sign Up</h2>
         {error && <p className="text-danger text-center">{error}</p>}
         <form onSubmit={handleSignup}>
           <div className="mb-3">
