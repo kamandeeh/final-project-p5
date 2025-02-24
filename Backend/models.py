@@ -29,7 +29,23 @@ class Profile(db.Model):
     gender = db.Column(db.String(10))
     location = db.Column(db.String(100))
     social_background = db.Column(db.String(200))
+    phone_number=db.Column(db.String(10))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+
+
+    def __repr__(self):
+        return f'<Profile {self.full_name}>'
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "full_name": self.full_name,
+            "age": self.age,
+            "gender": self.gender,
+            "location": self.location,
+            "social_background": self.social_background,
+            "user_id": self.user_id
+        }
 
 class Record(db.Model):
     __tablename__ = 'records'
@@ -51,3 +67,9 @@ class Record(db.Model):
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }
+
+class TokenBlocklist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(36), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False)
+
