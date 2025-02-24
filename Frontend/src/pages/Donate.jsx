@@ -1,81 +1,71 @@
-import React, { useState } from "react";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import { useState } from "react";
 
 const Donate = () => {
-  const [mobileNumber, setMobileNumber] = useState("");
-  const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [form, setForm] = useState({ phone: "", amount: "" });
+  const [message, setMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleDonation = () => {
-    if (mobileNumber.length === 10 && mobileNumber.startsWith("07")) {
-      setConfirmationMessage("M-Pesa payment prompt sent to " + mobileNumber);
-      // Here you should integrate an API call to M-Pesa STK push
-    } else {
-      setConfirmationMessage("Please enter a valid Kenyan mobile number.");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/mpesa/donate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ type: "success", text: data.message });
+      } else {
+        setMessage({ type: "danger", text: data.message });
+      }
+    } catch (err) {
+      setMessage({ type: "danger", text: "Something went wrong. Try again." });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Image paths (ensure these are in `public/` folder)
-  const images = [
-    "/images/refugee-camp.jpg",
-  "/images/helping-hands.jpg",
-  "/images/community-support.jpg",
-  ];
-
-  // Slider settings
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 3000,
-    arrows: false,
-  };
-
   return (
-    <div className="container mx-auto p-4 text-center">
-      <h1 className="text-3xl font-bold mb-4">Donate</h1>
+    <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: "linear-gradient(to right, #22FFCC, #E1EECC)" }}>
+      <div className="card shadow p-4 bg-white" style={{ width: "22rem", borderRadius: "10px" }}>
+        <h2 className="text-center mb-3">Donate via M-Pesa</h2>
 
-      {/* Image Slider */}
-      <Slider {...settings} className="w-full max-w-4xl mx-auto">
-        {images.map((src, index) => (
-          <div key={index} className="p-2">
-            <img
-              src={src}
-              alt={`Slide ${index + 1}`}
-              className="w-full h-80 object-cover rounded-lg shadow-lg"
+        {message && <p className={`text-${message.type} text-center`}>{message.text}</p>}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label className="form-label">Phone Number</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="07XXXXXXXX"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              required
             />
           </div>
-        ))}
-      </Slider>
 
-      {/* Donation Options */}
-      <ul className="mt-8">
-        <li className="bg-gray-200 p-2 rounded mb-2">Donation Drive for Refugees</li>
-        <li className="bg-gray-200 p-2 rounded mb-2">World Refugee Day Panel</li>
-        <li className="bg-gray-200 p-2 rounded">Cultural Exchange Program</li>
-      </ul>
+          <div className="mb-3">
+            <label className="form-label">Amount (KES)</label>
+            <input
+              type="number"
+              className="form-control"
+              placeholder="Enter Amount"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              required
+            />
+          </div>
 
-      {/* M-Pesa Donation */}
-      <div className="mt-8 bg-gray-100 rounded-lg shadow-md text-center p-6">
-        <h2 className="text-2xl font-bold mb-4">Donate via M-Pesa</h2>
-        <input
-          type="text"
-          placeholder="Enter your mobile number"
-          className="p-2 border rounded w-full"
-          value={mobileNumber}
-          onChange={(e) => setMobileNumber(e.target.value)}
-        />
-        <button
-          onClick={handleDonation}
-          className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-        >
-          Donate via M-Pesa
-        </button>
-        {confirmationMessage && <p className="mt-2 text-green-600">{confirmationMessage}</p>}
+          <button type="submit" className="btn btn-success w-100" disabled={loading}>
+            {loading ? "Processing..." : "Donate Now"}
+          </button>
+        </form>
       </div>
     </div>
   );
