@@ -1,3 +1,4 @@
+
 from flask import jsonify, request, Blueprint, url_for, redirect, session, abort
 from authlib.integrations.flask_client import OAuth
 from flask_dance.contrib.github import make_github_blueprint, github
@@ -11,8 +12,10 @@ import json
 load_dotenv()
 social_bp = Blueprint("social_bp", __name__)
 
+
 # OAuth Configuration
 oauth = OAuth()
+
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -27,6 +30,7 @@ oauth.register(
     userinfo_endpoint="https://openidconnect.googleapis.com/v1/userinfo",
     client_kwargs={"scope": "openid email profile"},
 )
+
 
 
 github_blueprint = make_github_blueprint(
@@ -49,10 +53,12 @@ def google_login():
 
 
 @social_bp.route("/auth/google/callback")
+
 def google_callback():
     try:
         token = oauth.google.authorize_access_token()
         user_info = token.get("userinfo")
+
 
         if not user_info:
             return jsonify({"error": "Failed to fetch user info"}), 400
@@ -69,15 +75,19 @@ def google_callback():
         user = User.query.filter_by(email=email).first()
         if not user:
             user = User(username=username, email=email, google_id=google_id)
+
             db.session.add(user)
             db.session.commit()
 
         jwt_token = create_access_token(identity=user.id)
 
+
         return jsonify({"message": "Login successful", "access_token": jwt_token, "user": user_info})
+
 
     except Exception as e:
         return jsonify({"error": "Google authentication failed", "details": str(e)}), 500
+
 
 @social_bp.route("/auth/google/logout")
 def google_logout():
@@ -129,10 +139,12 @@ def github_callback():
     user = User.query.filter_by(email=email).first()
     if not user:
         user = User(username=user_info["login"], email=email, github_id=user_info["id"])
+
         db.session.add(user)
         db.session.commit()
 
     jwt_token = create_access_token(identity=user.id)
+
 
     return jsonify({"message": "GitHub login successful", "access_token": jwt_token, "user": user_info})
 
@@ -152,3 +164,4 @@ def index():
         "logout_github": url_for("social_bp.github_logout", _external=True),
         "protected_area_google": url_for("social_bp.google_protected_area", _external=True),
     })
+
