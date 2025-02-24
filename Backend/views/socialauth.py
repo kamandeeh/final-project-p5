@@ -14,9 +14,9 @@ social_bp = Blueprint("social_bp", __name__)
 # OAuth Configuration
 oauth = OAuth()
 
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
 
-GOOGLE_CLIENT_ID = "787148443112-mnl2dqtoevqgnqasod1str5al6f1piiq.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "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"
 
 oauth.register(
     "google",
@@ -30,8 +30,8 @@ oauth.register(
 
 
 github_blueprint = make_github_blueprint(
-    client_id="Ov23lirLMXX8vKuDbf56",
-    client_secret="32fc2bcef4338822c55ee4b14995ac699683bf61",
+    client_id=os.getenv("GITHUB_CLIENT_ID"),
+    client_secret=os.getenv("GITHUB_CLIENT_SECRET"),
     scope="user:email"
 )
 
