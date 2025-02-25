@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import "./Navbar.css";
+
 const Navbar = () => {
   const { user, logout } = useUser();
   const [whoWeAreDropdown, setWhoWeAreDropdown] = useState(false);
@@ -9,10 +10,12 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="navbar bg-dark">
+    <nav className="navbar">
       <div className="navbar-container">
         {/* Logo */}
-        <h2 className="navbar-logo">BLAH Foundation</h2>
+        <Link to="/" className="navbar-logo">
+          <strong>BLAH</strong> Foundation
+        </Link>
 
         {/* Mobile Menu Toggle */}
         <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
@@ -24,23 +27,28 @@ const Navbar = () => {
           <li><Link to="/">Home</Link></li>
 
           {/* Who We Are Dropdown */}
-          <li className="dropdown"
-              onMouseEnter={() => setWhoWeAreDropdown(true)}
-              onMouseLeave={() => setWhoWeAreDropdown(false)}>
-            <span className="dropdown-toggle">Who We Are</span>
+          <li 
+            className="dropdown"
+            onMouseEnter={() => setWhoWeAreDropdown(true)}
+            onMouseLeave={() => setWhoWeAreDropdown(false)}
+          >
+            <span className="dropdown-toggle">Who We Are ▼</span>
             {whoWeAreDropdown && (
               <ul className="dropdown-menu">
                 <li><Link to="/aboutus">About Us</Link></li>
                 <li><Link to="/management-team">Management Team</Link></li>
               </ul>
+
             )}
           </li>
 
           {/* Get Involved Dropdown */}
-          <li className="dropdown"
-              onMouseEnter={() => setGetInvolvedDropdown(true)}
-              onMouseLeave={() => setGetInvolvedDropdown(false)}>
-            <span className="dropdown-toggle">Get Involved</span>
+          <li 
+            className="dropdown"
+            onMouseEnter={() => setGetInvolvedDropdown(true)}
+            onMouseLeave={() => setGetInvolvedDropdown(false)}
+          >
+            <span className="dropdown-toggle">Get Involved ▼</span>
             {getInvolvedDropdown && (
               <ul className="dropdown-menu">
                 <li><Link to="/records">Records</Link></li>
@@ -49,6 +57,7 @@ const Navbar = () => {
             )}
           </li>
 
+          <li><Link to="/reviews">Reviews</Link></li> {/* ✅ ADDED NEW PAGE */}
           <li><Link to="/contact">Contact Us</Link></li>
 
           {/* Profile/Login */}
@@ -59,8 +68,8 @@ const Navbar = () => {
             </>
           ) : (
             <>
-            <li><Link to="/login">Login</Link></li>
-            <li><Link to="/register">Register</Link></li>
+              <li><Link to="/login">Login</Link></li>
+              <li><Link to="/register">Register</Link></li>
             </>
           )}
         </ul>

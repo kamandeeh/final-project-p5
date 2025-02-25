@@ -11,21 +11,15 @@ const Home = () => {
   return (
     <div>
       {/* Hero Section */}
-      <section
-        className="hero-section text-center text-white d-flex align-items-center justify-content-center vh-100"
-      >
+      <section className="hero-section text-center text-white d-flex align-items-center justify-content-center vh-100">
         <div className="content">
           <h1 className="display-4 fw-bold">Welcome to BLAH Foundation</h1>
           <p className="fs-4 mt-3">Empowering Communities for a Better Tomorrow</p>
-          <button
-            className="btn btn-warning btn-lg mt-4"
-            onClick={scrollToAbout}
-          >
+          <button className="btn btn-warning btn-lg mt-4" onClick={scrollToAbout}>
             Learn More
           </button>
         </div>
       </section>
-
 
       {/* What We Do Section */}
       <section id="about-section" className="container my-5">

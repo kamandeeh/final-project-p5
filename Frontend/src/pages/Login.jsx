@@ -6,7 +6,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 
-const GITHUB_CLIENT_ID =os.getenv("GITHUB_CLIENT_ID");
+const GITHUB_CLIENT_ID ="Ov23lirLMXX8vKuDbf56";
 const GOOGLE_CLIENT_ID = "787148443112-mnl2dqtoevqgnqasod1str5al6f1piiq.apps.googleusercontent.com";
 
 const Login = () => {
@@ -59,7 +59,7 @@ const Login = () => {
     <div
       className="d-flex justify-content-center align-items-center vh-100"
       style={{
-        background: "linear-gradient(to right, #22FFCC, #E1EECC)",
+        backgroundColor:"lightcyan"
       }}
     >
       <div

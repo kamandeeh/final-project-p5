@@ -54,7 +54,7 @@ const Signup = () => {
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100" style={{
-        background: "linear-gradient(to right, #2FC, #e1EC)", 
+        backgroundColor:"deepskyblue"
       }}>
       <div className="card shadow p-4 bg-white" style={{ width: "22rem", borderRadius: "10px"}}>
         <h2 className="text-center mb-3 text-black">Sign Up</h2>
