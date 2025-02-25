@@ -1,7 +1,9 @@
 from flask import jsonify,request,Blueprint
 from models import db,User
+from flask_cors import CORS
 
 user_bp = Blueprint("user_bp", __name__)
+CORS(user_bp)
 
 @user_bp.route("/users",methods=["GET"])
 def get_users():

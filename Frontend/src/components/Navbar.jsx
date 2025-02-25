@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHouse, faUser, faRightFromBracket } from "@fortawesome/free-solid-svg-icons"; 
 import "./Navbar.css";
+import { logout } from "../../firebase"
 
 const Navbar = () => {
-  const { user, logout } = useUser();
+  const { user } = useUser();
   const [whoWeAreDropdown, setWhoWeAreDropdown] = useState(false);
   const [getInvolvedDropdown, setGetInvolvedDropdown] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -21,10 +24,14 @@ const Navbar = () => {
         <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
           ☰
         </button>
-
+      
         {/* Navigation Links */}
         <ul className={`nav-links ${menuOpen ? "active" : ""}`}>
-          <li><Link to="/">Home</Link></li>
+          <li>
+            <Link to="/">
+              <FontAwesomeIcon icon={faHouse} /> Home
+            </Link>
+          </li>
 
           {/* Who We Are Dropdown */}
           <li 
@@ -63,8 +70,16 @@ const Navbar = () => {
           {/* Profile/Login */}
           {user ? (
             <>
-              <li><Link to="/profile">Profile</Link></li>
-              <li><button className="logout-btn" onClick={logout}>Logout</button></li>
+              <li>
+                <Link to="/profile">
+                  <FontAwesomeIcon icon={faUser} /> Profile
+                </Link>
+              </li>
+              <li>
+                <button className="logout-btn" onClick={logout}>
+                  <FontAwesomeIcon icon={faRightFromBracket} /> Logout
+                </button>
+              </li>
             </>
           ) : (
             <>

@@ -8,10 +8,11 @@ import os
 from dotenv import load_dotenv
 from models import db, User
 import json
+from flask_cors import CORS
 
 load_dotenv()
 social_bp = Blueprint("social_bp", __name__)
-
+CORS(social_bp)
 
 # OAuth Configuration
 oauth = OAuth()
@@ -43,7 +44,7 @@ github_blueprint = make_github_blueprint(
 def login_is_required(function):
     def wrapper(*args, **kwargs):
         if "google_id" not in session:
-            return abort(401)  # Unauthorized
+            return abort(401) 
         return function(*args, **kwargs)
     return wrapper
 
@@ -53,7 +54,6 @@ def google_login():
 
 
 @social_bp.route("/auth/google/callback")
-
 def google_callback():
     try:
         token = oauth.google.authorize_access_token()
