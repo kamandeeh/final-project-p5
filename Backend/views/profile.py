@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
 from models import db, Profile
+from flask_cors import CORS
 
 profile_bp = Blueprint('profile', __name__)
+CORS(profile_bp)
 
 @profile_bp.route('/profile', methods=['POST'])
 def create_profile():

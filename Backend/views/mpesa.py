@@ -1,8 +1,10 @@
 from flask import Flask,Blueprint,request
 import requests
 from requests.auth import HTTPBasicAuth
+from flask_cors import CORS
 
 mpesa_bp=Blueprint("mpesa_bp",__name__)
+CORS(mpesa_bp)
 
 #mpesa details
 consumer_key='rFYhFppuJv2Jhk54GhtBzweTwsbpYDu2yOIXA5rpHHMgeg2O'
