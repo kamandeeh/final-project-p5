@@ -4,6 +4,7 @@ from models import db,TokenBlocklist
 from datetime import timedelta
 from flask_jwt_extended import JWTManager
 import os
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -13,9 +14,11 @@ migrate = Migrate(app, db)
 
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "uhdhfjhfjksddjhdyd")
+app.config["JWT_ALGORITHM"] = "HS256" 
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] =  timedelta(hours=1)
 jwt = JWTManager(app)
 jwt.init_app(app)
+CORS(app)
 
 from views import *
 

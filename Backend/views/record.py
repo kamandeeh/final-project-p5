@@ -1,7 +1,9 @@
 from models import db,Record
 from flask import jsonify,request,Blueprint
+from flask_cors import CORS
 
 record_bp= Blueprint("record_bp", __name__)
+CORS(record_bp)
 
 @record_bp.route("/record",methods=["GET"])
 def get_records():
