@@ -4,7 +4,7 @@ import { useUser } from "../context/UserContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHouse, faUser, faRightFromBracket } from "@fortawesome/free-solid-svg-icons"; 
 import "./Navbar.css";
-import { logout } from "../../firebase"
+import { logout } from "../../firebase";
 
 const Navbar = () => {
   const { user } = useUser();
@@ -42,10 +42,9 @@ const Navbar = () => {
             <span className="dropdown-toggle">Who We Are ▼</span>
             {whoWeAreDropdown && (
               <ul className="dropdown-menu">
-                <li><Link to="/aboutus">About Us</Link></li>
+                <li><Link to="/about-us">About Us</Link></li> {/* ✅ Fixed route */}
                 <li><Link to="/management-team">Management Team</Link></li>
               </ul>
-
             )}
           </li>
 
@@ -64,7 +63,7 @@ const Navbar = () => {
             )}
           </li>
 
-          <li><Link to="/reviews">Reviews</Link></li> {/* ✅ ADDED NEW PAGE */}
+          <li><Link to="/reviews">Reviews</Link></li> {/* ✅ Added Page */}
           <li><Link to="/contact">Contact Us</Link></li>
 
           {/* Profile/Login */}
