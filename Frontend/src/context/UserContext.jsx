@@ -1,43 +1,69 @@
 import { createContext, useState, useEffect, useContext } from "react";
+import { listenForAuthChanges, logout as firebaseLogout } from "../../firebase";
 
-const UserContext = createContext();
+const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+      return null;
+    }
+  });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
-      console.log("Stored token:", token);  
-    
-      if (token) {
-        try {
-          const response = await fetch("http://127.0.0.1:5000/current_user", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-    
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-          } else {
-            console.error("Error response:", await response.json()); // Log error details
-            logout();
-          }
-        } catch (error) {
-          console.error("Error fetching user:", error);
-          logout();
-        }
+  
+      if (!token) {
+        console.warn("No token found, logging out...");
+        logout(); // Ensure user is logged out if no token exists
+        return;
       }
-      setLoading(false);
+  
+      try {
+        const response = await fetch("http://127.0.0.1:5000/current_user", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+          localStorage.setItem("user", JSON.stringify(userData));
+        } else {
+          console.warn("Unauthorized access, logging out...");
+          logout(); // Logout user if the token is invalid or expired
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        logout();
+      } finally {
+        setLoading(false);
+      }
     };
-    
   
     fetchUser();
   }, []);
   
+  useEffect(() => {
+    const unsubscribe = listenForAuthChanges(setUser);
+    
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
+  }, []);
 
-  // Register a new user
+  useEffect(() => {
+    console.log("Current User:", user);
+  }, [user]);
+
   const register = async (userData, navigate) => {
     try {
       const response = await fetch("http://127.0.0.1:5000/register", {
@@ -48,9 +74,10 @@ export const UserProvider = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token", data.access_token);
         setUser(data.user);
-        navigate("/login"); 
+        localStorage.setItem("user", JSON.stringify(data.user));
+        navigate("/dashboard");
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -65,15 +92,17 @@ export const UserProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
   
+      const data = await response.json();
+      console.log("Server Response:", data);  // Debugging
+  
       if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(errorMessage || "Login failed");
+        throw new Error(data.message || "Login failed");
       }
   
-      const data = await response.json();
-      localStorage.setItem("token", data.access_token);  
+      localStorage.setItem("token", data.access_token);
       setUser(data.user);
-      
+      localStorage.setItem("user", JSON.stringify(data.user));
+  
       return { success: true, data };
     } catch (error) {
       console.error("Login error:", error);
@@ -81,16 +110,21 @@ export const UserProvider = ({ children }) => {
     }
   };
   
-  
-  
 
-  // Logout user
-  const logout = (navigate) => {
+  const logout = async (navigate) => {
     localStorage.removeItem("token");
-    setUser(null);
-    if (navigate) navigate("/login"); // ✅ Ensure navigation only if function was called with `navigate`
+    localStorage.removeItem("user");
+  
+    try {
+      await firebaseLogout();
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  
+    setUser(null); // Reset user state here
+    if (navigate) navigate("/login");
   };
-
+  
   return (
     <UserContext.Provider value={{ user, setUser, loading, login, register, logout }}>
       {children}
@@ -98,4 +132,10 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error("useUser must be used within a UserProvider");
+  }
+  return context;
+};

@@ -1,30 +1,30 @@
-from models import db,Record
-from flask import jsonify,request,Blueprint
+from models import db, Record
+from flask import jsonify, request, Blueprint, current_app
 from flask_cors import CORS
 
-record_bp= Blueprint("record_bp", __name__)
-CORS(record_bp)
+record_bp = Blueprint("record_bp", __name__)
+CORS(record_bp, resources={r"/*": {"origins": "http://localhost:5173"}})
 
-@record_bp.route("/record",methods=["GET"])
+
+@record_bp.route("/records", methods=["GET"])
 def get_records():
     try:
-        records=Record.query.all()
-        records_list=[]
+        records = Record.query.all()
+        records_list = []
         for record in records:
-            record_data={
-                'id':record.id,
-                'county':record.county, 
-                'description':record.description,
-                'category':record.category,
-                'created_at':record.created_at,
-                'updated_at': record.updated_at
+            record_data = {
+                'id': record.id,
+                'county': record.county, 
+                'description': record.description,
+                'category': record.category,
+                'created_at': record.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'updated_at': record.updated_at.strftime('%Y-%m-%d %H:%M:%S') if record.updated_at else None
             }
-            records_list.record.append(record_data)
+            records_list.append(record_data)  # ✅ Fixed
         return jsonify(records_list), 200
     except Exception as e:
-        record.bp.logger.error(f"Error: {str(e)}")
+        current_app.logger.error(f"Error: {str(e)}")  
         return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
-
 
 @record_bp.route("/record/<int:id>", methods=['PUT'])
 def update_record(id):
@@ -58,9 +58,8 @@ def update_record(id):
         }), 200
 
     except Exception as e:
-        record_bp.logger.error(f"Error: {str(e)}")
+        record_bp.logger.error(f"Error: {str(e)}") 
         return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
-    
     
 @record_bp.route("/record", methods=['POST'])
 def create_record():
@@ -96,5 +95,18 @@ def create_record():
         }), 201
 
     except Exception as e:
-        record_bp.logger.error(f"Error: {str(e)}")
+        record_bp.logger.error(f"Error: {str(e)}") 
         return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
+
+
+@record_bp.route("/search", methods=["GET"])
+def search_counties():
+    query = request.args.get("query", "").lower()
+    if not query:
+        return jsonify([])  # Return empty list if no query
+
+    results = Record.query.filter(
+        (Record.county.ilike(f"%{query}%")) | (Record.category.ilike(f"%{query}%"))
+    ).all()
+
+    return jsonify([{"county": c.county, "category": c.category} for c in results])
