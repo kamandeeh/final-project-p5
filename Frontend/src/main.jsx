@@ -8,8 +8,8 @@ const clientId = "YOUR_GOOGLE_CLIENT_ID"; // Replace with your actual client ID
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-
-      <App />
-
+      
+        <App />
+        
   </React.StrictMode>
 );
