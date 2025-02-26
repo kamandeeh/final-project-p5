@@ -23,6 +23,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.poverty-line-*.json  
+Backend/poverty-line-5ed46-firebase-adminsdk-fbsvc-12a6c726d7.json
+
 # Environment variables
 .env
