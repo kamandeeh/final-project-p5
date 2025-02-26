@@ -21,7 +21,6 @@ import "./index.css";
 
 export default function App() {
 
-  const clientId = "787148443112-mnl2dqtoevqgnqasod1str5al6f1piiq.apps.googleusercontent.com"; 
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
