@@ -1,117 +1,110 @@
 import { useState } from "react";
+import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
-import { 
-  signUpWithEmail, signInWithGoogle, signInWithGithub 
-} from "../../firebase"; 
-import { GoogleLogin } from "@react-oauth/google";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import { signInWithGoogle, signInWithGithub } from "../../firebase";
+import { BsGoogle, BsGithub } from "react-icons/bs";
 
-const Signup = () => {
+const SignupPage = () => {
+  const { register } = useUser();
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
-  const handleSignup = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    const userData = { username, email, password };
+    await register(userData, navigate);
+  };
+
+  const handleSocialAuth = async (provider, providerName) => {
     try {
-      const user = await signUpWithEmail(email, password);
+      const user = await provider();
       if (user) {
-        localStorage.setItem("token", user.accessToken);
+        const response = await fetch("http://127.0.0.1:5000/social_login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: user.displayName || "", 
+            email: user.email,
+            provider: providerName,
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to store user data");
+        }
+
         navigate("/login");
-      } else {
-        setError("Signup failed. Try again.");
       }
     } catch (err) {
       setError(err.message);
     }
   };
 
-  // Handle Google Signup
-  const handleGoogleSignup = async () => {
-    try {
-      const user = await signInWithGoogle();
-      if (user) {
-        localStorage.setItem("token", user.accessToken);
-        navigate("/login");
-      }
-    } catch (err) {
-      console.error("Google Signup Failed", err);
-    }
-  };
-
-  // Handle GitHub Signup
-  const handleGitHubSignup = async () => {
-    try {
-      const user = await signInWithGithub();
-      if (user) {
-        localStorage.setItem("token", user.accessToken);
-        navigate("/login");
-      }
-    } catch (err) {
-      console.error("GitHub Signup Failed", err);
-    }
-  };
-
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100" 
-      style={{ background: "linear-gradient(to right, #2FC, #e1EC)" }}>
-      
-      <div className="card shadow p-4 bg-white" 
-        style={{ width: "22rem", borderRadius: "10px" }}>
-        
-        <h2 className="text-center mb-3 text-black">Sign Up</h2>
+    <div className="container d-flex justify-content-center align-items-center vh-100">
+      <div className="card p-4 shadow-lg w-100" style={{ maxWidth: "400px" }}>
+        <h2 className="text-center mb-3">Sign Up</h2>
         {error && <p className="text-danger text-center">{error}</p>}
-        
-        <form onSubmit={handleSignup}>
+        <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="form-label">Username</label>
-            <input 
-              type="text" value={username} 
-              onChange={(e) => setUsername(e.target.value)} 
-              required className="form-control" 
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="form-control"
+              required
             />
           </div>
           <div className="mb-3">
             <label className="form-label">Email</label>
-            <input 
-              type="email" value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required className="form-control" 
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="form-control"
+              required
             />
           </div>
           <div className="mb-3">
             <label className="form-label">Password</label>
-            <input 
-              type="password" value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required className="form-control" 
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="form-control"
+              required
             />
           </div>
-          <button type="submit" className="btn btn-warning w-100">
+          <button type="submit" className="btn btn-primary w-100">
             Sign Up
           </button>
         </form>
-
-        {/* Google Signup Button */}
-        <div className="mt-3 text-center">
-          <button onClick={handleGoogleSignup} className="btn btn-danger w-100">
-            <i className="bi bi-google"></i> Sign Up with Google
+        <div className="d-flex justify-content-center mt-3 gap-2">
+          <button 
+            onClick={() => handleSocialAuth(signInWithGoogle, "google")} 
+            className="btn btn-danger w-50 d-flex align-items-center justify-content-center"
+          >
+            <BsGoogle className="me-2" /> Google
+          </button>
+          <button 
+            onClick={() => handleSocialAuth(signInWithGithub, "github")} 
+            className="btn btn-dark w-50 d-flex align-items-center justify-content-center"
+          >
+            <BsGithub className="me-2" /> GitHub
           </button>
         </div>
-
-        {/* GitHub Signup Button */}
-        <div className="mt-3 text-center">
-          <button onClick={handleGitHubSignup} className="btn btn-dark w-100">
-            <i className="bi bi-github"></i> Sign Up with GitHub
-          </button>
-        </div>
+        <p className="text-center mt-3">
+          Already have an account? <a href="/login" className="text-primary">Login</a>
+        </p>
       </div>
     </div>
   );
 };
 
-export default Signup;
+export default Register;
