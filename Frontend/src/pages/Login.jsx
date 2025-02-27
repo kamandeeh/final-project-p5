@@ -1,110 +1,95 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { 
-  signInWithEmail, signInWithGoogle, signInWithGithub 
-} from "../../firebase";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import { useUser } from "../context/UserContext";
+import { useNavigate } from "react-router-dom";
+import { signInWithGoogle, signInWithGithub } from "../../firebase";
+import { BsGoogle, BsGithub } from "react-icons/bs";
 
 const Login = () => {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState(null);
+  const { login } = useUser(); 
   const navigate = useNavigate();
-  const location = useLocation();
-  const redirectPath = new URLSearchParams(location.search).get("redirect") || "/";
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
 
-  // Handle Email/Password Login
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    try {
-      const user = await signInWithEmail(form.email, form.password);
-      if (user) {
-        localStorage.setItem("token", user.accessToken);
-        navigate(redirectPath);
-        window.location.reload();
-      } else {
-        setError("Login failed. Check your credentials.");
-      }
-    } catch (err) {
-      setError(err.message);
+    if (!login) {
+      console.error("Login function is undefined");
+      return;
+    }
+
+    const result = await login(email, password);
+    if (result.success) {
+      navigate("/");
+    } else {
+      setError(result.error);
     }
   };
 
-  // Handle Google Login
   const handleGoogleLogin = async () => {
     try {
       const user = await signInWithGoogle();
-      if (user) {
-        localStorage.setItem("token", user.accessToken);
-        navigate(redirectPath);
-        window.location.reload();
-      }
+      console.log("Google Login Success:", user);
+      navigate("/");
     } catch (err) {
       setError("Google authentication failed.");
+      console.error(err);
     }
   };
 
-  // Handle GitHub Login
-  const handleGitHubLogin = async () => {
+  const handleGithubLogin = async () => {
     try {
       const user = await signInWithGithub();
-      if (user) {
-        localStorage.setItem("token", user.accessToken);
-        navigate(redirectPath);
-        window.location.reload();
-      }
+      console.log("GitHub Login Success:", user);
+      navigate("/");
     } catch (err) {
       setError("GitHub authentication failed.");
+      console.error(err);
     }
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100"
-      style={{ background: "linear-gradient(to right, #22FFCC, #E1EECC)" }}>
-      
-      <div className="card shadow p-4 bg-white" style={{ width: "22rem", borderRadius: "10px" }}>
-        
+    <div className="container d-flex justify-content-center align-items-center vh-100">
+      <div className="card p-4 shadow-lg w-100" style={{ maxWidth: "400px" }}>
         <h2 className="text-center mb-3">Login</h2>
         {error && <p className="text-danger text-center">{error}</p>}
-
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="form-label">Email</label>
-            <input 
-              type="email" value={form.email} 
-              onChange={(e) => setForm({ ...form, email: e.target.value })} 
-              required className="form-control" 
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="form-control"
+              required
             />
           </div>
           <div className="mb-3">
             <label className="form-label">Password</label>
-            <input 
-              type="password" value={form.password} 
-              onChange={(e) => setForm({ ...form, password: e.target.value })} 
-              required className="form-control" 
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="form-control"
+              required
             />
           </div>
-          <button type="submit" className="btn btn-warning w-100">
+          <button type="submit" className="btn btn-primary w-100">
             Login
           </button>
         </form>
-
-        {/* Google Login Button */}
-        <div className="mt-3 text-center">
-          <button onClick={handleGoogleLogin} className="btn btn-danger w-100">
-            <i className="bi bi-google"></i> Login with Google
+        <hr />
+        <p className="text-center">Or login with:</p>
+        <div className="d-flex justify-content-center">
+          <button className="btn btn-danger me-2" onClick={handleGoogleLogin}>
+            <BsGoogle /> Continue with Google
+          </button>
+          <button className="btn btn-dark" onClick={handleGithubLogin}>
+            <BsGithub /> Continue with GitHub
           </button>
         </div>
-
-        {/* GitHub Login Button */}
-        <div className="mt-3 text-center">
-          <button onClick={handleGitHubLogin} className="btn btn-dark w-100">
-            <i className="bi bi-github"></i> Login with GitHub
-          </button>
-        </div>
-
       </div>
     </div>
   );

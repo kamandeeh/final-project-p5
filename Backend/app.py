@@ -18,7 +18,7 @@ app.config["JWT_ALGORITHM"] = "HS256"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] =  timedelta(hours=1)
 jwt = JWTManager(app)
 jwt.init_app(app)
-CORS(app)
+CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
 from views import *
 
@@ -29,7 +29,7 @@ app.register_blueprint(profile_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(mpesa_bp)
 app.register_blueprint(social_bp)
-app.register_blueprint(github_blueprint, url_prefix='/github_login')
+app.register_blueprint(county_bp)
 
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
@@ -38,4 +38,8 @@ def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
 
     return token is not None
 
-
+@app.after_request
+def set_headers(response):
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+    response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
+    return response
