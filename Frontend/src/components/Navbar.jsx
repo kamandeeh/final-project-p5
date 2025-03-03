@@ -1,52 +1,142 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { UserContext } from "../context/usercontext";
+import { useUser } from "../context/UserContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHouse,
+  faUser,
+  faRightFromBracket,
+  faAngleDown,
+  faGaugeHigh, // Admin icon
+} from "@fortawesome/free-solid-svg-icons";
+import "./Navbar.css";
 
 const Navbar = () => {
-  const { user } = useContext(UserContext);
+  const { user, logout } = useUser();
   const [whoWeAreDropdown, setWhoWeAreDropdown] = useState(false);
   const [getInvolvedDropdown, setGetInvolvedDropdown] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Toggle mobile menu
+  const toggleMenu = () => setMenuOpen(!menuOpen);
 
   return (
-    <nav className="bg-gray-800 text-white p-4 fixed top-0 left-0 w-full z-50 shadow-lg">
-      <div className="container mx-auto flex justify-between items-center">
-        <h1 className="text-2xl font-bold">BLAH Foundation</h1>
-        <ul className="flex space-x-6 relative">
-          <li><Link className="hover:text-gray-400" to="/">Home</Link></li>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary px-4 py-3 shadow">
+      <div className="container-fluid">
+        {/* Logo */}
+        <Link to="/" className="navbar-brand fs-3 fw-bold text-white">
+          BLAH Foundation
+        </Link>
 
-          {/* Who We Are Dropdown */}
-          <li className="relative"
-            onMouseEnter={() => setWhoWeAreDropdown(true)}
-            onMouseLeave={() => setWhoWeAreDropdown(false)}>
-            <span className="cursor-pointer">Who We Are ▼</span>
-            {whoWeAreDropdown && (
-              <ul className="absolute left-0 mt-2 bg-gray-700 text-white shadow-lg rounded w-52">
-                <li><Link className="block px-4 py-2 hover:bg-gray-600" to="/aboutus">About Us</Link></li>
-                <li><Link className="block px-4 py-2 hover:bg-gray-600" to="/management-team">Management Team</Link></li>
-              </ul>
+        {/* Mobile Menu Toggle */}
+        <button className="navbar-toggler" type="button" onClick={toggleMenu}>
+          <span className="navbar-toggler-icon"></span>
+        </button>
+
+        {/* Navigation Links */}
+        <div className={`collapse navbar-collapse ${menuOpen ? "show" : ""}`}>
+          <ul className="navbar-nav ms-auto align-items-center">
+            <li className="nav-item">
+              <Link className="nav-link text-white fw-semibold" to="/">
+                <FontAwesomeIcon icon={faHouse} /> Home
+              </Link>
+            </li>
+
+            {/* Who We Are Dropdown */}
+            <li className="nav-item dropdown">
+              <span
+                className="nav-link text-white fw-semibold dropdown-toggle"
+                onClick={() => setWhoWeAreDropdown(!whoWeAreDropdown)}
+                style={{ cursor: "pointer" }}
+              >
+                Who We Are <FontAwesomeIcon icon={faAngleDown} />
+              </span>
+              {whoWeAreDropdown && (
+                <ul className="dropdown-menu show">
+                  <li>
+                    <Link className="dropdown-item" to="/aboutus">
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link className="dropdown-item" to="/management-team">
+                      Management Team
+                    </Link>
+                  </li>
+                </ul>
+              )}
+            </li>
+
+            {/* Get Involved Dropdown */}
+            <li className="nav-item dropdown">
+              <span
+                className="nav-link text-white fw-semibold dropdown-toggle"
+                onClick={() => setGetInvolvedDropdown(!getInvolvedDropdown)}
+                style={{ cursor: "pointer" }}
+              >
+                Get Involved <FontAwesomeIcon icon={faAngleDown} />
+              </span>
+              {getInvolvedDropdown && (
+                <ul className="dropdown-menu show">
+                  <li>
+                    <Link className="dropdown-item" to="/county_stats">
+                      Records
+                    </Link>
+                  </li>
+                  <li>
+                    <Link className="dropdown-item" to="/donate">
+                      Donate
+                    </Link>
+                  </li>
+                </ul>
+              )}
+            </li>
+
+            <li className="nav-item">
+              <Link className="nav-link text-white fw-semibold" to="/contact">
+                Contact Us
+              </Link>
+            </li>
+
+            {/* Admin Dashboard (Only for Admins) */}
+            {user?.is_admin && (
+              <li className="nav-item">
+                <Link className="nav-link text-warning fw-semibold" to="/admin/dashboard">
+                  <FontAwesomeIcon icon={faGaugeHigh} /> Admin Dashboard
+                </Link>
+              </li>
             )}
-          </li>
 
-          {/* Get Involved Dropdown */}
-          <li className="relative"
-            onMouseEnter={() => setGetInvolvedDropdown(true)}
-            onMouseLeave={() => setGetInvolvedDropdown(false)}>
-            <span className="cursor-pointer">Get Involved ▼</span>
-            {getInvolvedDropdown && (
-              <ul className="absolute left-0 mt-2 bg-gray-700 text-white shadow-lg rounded w-52">
-                <li><Link className="block px-4 py-2 hover:bg-gray-600" to="/records">Records</Link></li>
-                <li><Link className="block px-4 py-2 hover:bg-gray-600" to="/donate">Donate</Link></li>
-              </ul>
+            {/* Profile/Login */}
+            {user ? (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link text-white fw-semibold" to="/profile">
+                    <FontAwesomeIcon icon={faUser} /> Profile
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <button className="btn btn-danger text-white fw-semibold ms-3" onClick={logout}>
+                    <FontAwesomeIcon icon={faRightFromBracket} /> Logout
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link text-white fw-semibold" to="/login">
+                    Login
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link text-white fw-semibold" to="/register">
+                    Register
+                  </Link>
+                </li>
+              </>
             )}
-          </li>
-
-          <li><Link className="hover:text-gray-400" to="/contact">Contact Us</Link></li>
-          {user ? (
-            <li><Link className="hover:text-gray-400" to="/profile">Profile</Link></li>
-          ) : (
-            <li><Link className="hover:text-gray-400" to="/login">Login</Link></li>
-          )}
-        </ul>
+          </ul>
+        </div>
       </div>
     </nav>
   );

@@ -1,0 +1,51 @@
+/* Center the chart container */
+.chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f8f9fa;
+    padding: 20px;
+  }
+  
+  /* Card styling */
+  .chart-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 600px;
+    text-align: center;
+  }
+  
+  /* Chart title */
+  .chart-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  /* Dropdown container */
+  .dropdown-container {
+    margin-bottom: 15px;
+  }
+  
+  /* Dropdown styling */
+  .dropdown {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 60%;
+    cursor: pointer;
+  }
+  
+  /* Graph wrapper */
+  .graph-wrapper {
+    background: #fafafa;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+  }
+  
