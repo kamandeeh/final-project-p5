@@ -4,41 +4,41 @@ import { listenForAuthChanges, logout as firebaseLogout } from "../../firebase";
 const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch (error) {
-      console.error("Error parsing user from localStorage:", error);
-      return null;
-    }
-  });
-
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchUser = async () => {
+      setLoading(true);
       const token = localStorage.getItem("token");
-  
+
       if (!token) {
         console.warn("No token found, logging out...");
-        logout(); // Ensure user is logged out if no token exists
+        logout();
         return;
       }
-  
+
       try {
         const response = await fetch("http://127.0.0.1:5000/current_user", {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-          localStorage.setItem("user", JSON.stringify(userData));
-        } else {
+
+        if (!response.ok) {
           console.warn("Unauthorized access, logging out...");
-          logout(); // Logout user if the token is invalid or expired
+          logout();
+          return;
         }
+
+        const userData = await response.json();
+        setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
       } catch (error) {
         console.error("Error fetching user:", error);
         logout();
@@ -46,13 +46,21 @@ export const UserProvider = ({ children }) => {
         setLoading(false);
       }
     };
-  
+
     fetchUser();
   }, []);
-  
+
   useEffect(() => {
-    const unsubscribe = listenForAuthChanges(setUser);
-    
+    const unsubscribe = listenForAuthChanges((firebaseUser) => {
+      if (firebaseUser) {
+        console.log("Firebase user detected:", firebaseUser);
+        setUser(firebaseUser);
+      } else {
+        console.warn("No Firebase user, logging out...");
+        logout();
+      }
+    });
+
     return () => {
       if (typeof unsubscribe === "function") {
         unsubscribe();
@@ -60,11 +68,7 @@ export const UserProvider = ({ children }) => {
     };
   }, []);
 
-  useEffect(() => {
-    console.log("Current User:", user);
-  }, [user]);
-
-  const register = async (userData, navigate) => {
+  const register = async (userData) => {
     try {
       const response = await fetch("http://127.0.0.1:5000/register", {
         method: "POST",
@@ -72,15 +76,16 @@ export const UserProvider = ({ children }) => {
         body: JSON.stringify(userData),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("token", data.access_token);
-        setUser(data.user);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/dashboard");
+      const data = await response.json();
+      if (!response.ok) {
+        console.error("Registration failed:", data);
+        throw new Error(data.error || "Registration failed");
       }
+
+      return { success: true, data };
     } catch (error) {
       console.error("Registration error:", error);
+      return { success: false, error: error.message };
     }
   };
 
@@ -91,42 +96,74 @@ export const UserProvider = ({ children }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-  
+
       const data = await response.json();
-      console.log("Server Response:", data);  // Debugging
-  
       if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+        throw new Error(data.error || "Login failed");
       }
-  
+
+      if (!data.access_token) {
+        throw new Error("No access token received");
+      }
+
       localStorage.setItem("token", data.access_token);
       setUser(data.user);
       localStorage.setItem("user", JSON.stringify(data.user));
-  
+
       return { success: true, data };
     } catch (error) {
       console.error("Login error:", error);
       return { success: false, error: error.message };
     }
   };
+  const socialLogin = async (idToken) => {
+    if (!idToken) {
+      console.error("🚨 Error: ID Token is missing or empty!");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://127.0.0.1:5000/social_login", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ id_token: idToken }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+  
+      const data = await response.json();
+      console.log("Login successful:", data);
+      return data;
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    }
+  };
+  
+  
+  
   
 
-  const logout = async (navigate) => {
+  const logout = async () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-  
+
     try {
       await firebaseLogout();
     } catch (error) {
       console.error("Logout Error:", error);
     }
-  
-    setUser(null); // Reset user state here
-    if (navigate) navigate("/login");
+
+    setUser(null);
   };
-  
+
   return (
-    <UserContext.Provider value={{ user, setUser, loading, login, register, logout }}>
+    <UserContext.Provider value={{ user, setUser, loading, login, register, socialLogin, logout }}>
       {children}
     </UserContext.Provider>
   );

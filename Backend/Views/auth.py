@@ -1,4 +1,4 @@
-from flask import jsonify, request, Blueprint
+from flask import jsonify, request, Blueprint,current_app
 from models import db, User, TokenBlocklist
 from werkzeug.security import check_password_hash,generate_password_hash
 from datetime import datetime
@@ -10,7 +10,7 @@ from firebase_admin import auth, credentials
 import os
 
 auth_bp= Blueprint("auth_bp", __name__)
-CORS(auth_bp)
+CORS(auth_bp, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
 
 firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS")
 
@@ -24,18 +24,36 @@ firebase_admin.initialize_app(cred)
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    print("Login Attempt:", data)  # Debugging: Log request data
+    id_token = data.get("id_token")  # Get the Firebase ID token
 
-    user = User.query.filter_by(email=data.get("email")).first()
+    try:
+        decoded_token = auth.verify_id_token(id_token)  # Verify token with Firebase
+        uid = decoded_token["uid"]
+        email = decoded_token.get("email", None)
+        provider = decoded_token.get("firebase", {}).get("sign_in_provider", "unknown")
+
+        if not email:
+            return jsonify({"error": "Email not provided by provider"}), 400
+
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            # If user exists but doesn't have a uid, assign it
+            if not user.uid:
+                user.uid = uid
+                db.session.commit()
+        else:
+            # Create new user if not found
+            user = User(username=email.split('@')[0], email=email, provider=provider, uid=uid)
+            db.session.add(user)
+            db.session.commit()
+
+        access_token = create_access_token(identity=user.id)
+        return jsonify({"access_token": access_token, "uid": user.uid}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 401
     
-    if not user or not check_password_hash(user.password, data.get("password")):
-        print("Login failed: Invalid credentials")  # Debugging
-        return jsonify({"message": "Invalid credentials"}), 401
-
-    access_token = create_access_token(identity=user.id)
-    return jsonify(access_token=access_token, user=user.to_dict()), 200
-
-
 # current user
 @auth_bp.route("/current_user", methods=["GET"])
 @jwt_required()
@@ -128,3 +146,4 @@ def firebase_auth():
     except Exception as e:
         print("Firebase Auth Error:", str(e))  # Debugging
         return jsonify({"error": "Invalid Firebase token or authentication failed"}), 400
+

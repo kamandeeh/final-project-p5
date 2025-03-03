@@ -15,10 +15,21 @@ const SignupPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-
+  
     const userData = { username, email, password };
-    await register(userData, navigate);
+  
+    try {
+      const success = await register(userData);
+      if (success) {
+        console.log("Navigating to login page");
+        navigate("/profile-form"); 
+      }
+    } catch (error) {
+      setError("Signup failed. Please try again.");
+    }
   };
+
+  
 
   const handleSocialAuth = async (provider, providerName) => {
     try {
@@ -38,7 +49,7 @@ const SignupPage = () => {
           throw new Error("Failed to store user data");
         }
 
-        navigate("/login");
+        navigate("/profile-form");
       }
     } catch (err) {
       setError(err.message);
