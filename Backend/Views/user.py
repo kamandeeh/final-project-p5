@@ -3,7 +3,7 @@ from models import db,User
 from flask_cors import CORS
 
 user_bp = Blueprint("user_bp", __name__)
-CORS(user_bp)
+CORS(user_bp, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
 
 @user_bp.route("/users",methods=["GET"])
 def get_users():
@@ -38,4 +38,5 @@ def get_user(user_id):
             'created_at': user.created_at.strftime('%Y-%m-%d %H:%M:%S')
         }
         return jsonify(user_data)
-    return jsonify({"error": "User not found"}), 404    
+    return jsonify({"error": "User not found"}), 404  
+

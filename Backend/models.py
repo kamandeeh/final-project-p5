@@ -16,7 +16,10 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     provider = db.Column(db.String(50), default="email")
-    
+    uid = db.Column(db.String(255), unique=True, nullable=True)
+    profile_completed = db.Column(db.Boolean, default=False)
+
+
     profile = db.relationship('Profile', backref='user', uselist=False, cascade='all, delete')
 
     def to_dict(self):
@@ -26,7 +29,9 @@ class User(db.Model):
             "email": self.email,
             "is_admin": self.is_admin,
             "created_at": self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            "provider": self.provider
+            "provider": self.provider,
+            "uid": self.uid,
+            "profileCompleted": self.profile_completed
         }
 
 class Profile(db.Model):
@@ -34,12 +39,13 @@ class Profile(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(150), nullable=False)
-    age = db.Column(db.Integer)
-    gender = db.Column(db.String(10))
-    location = db.Column(db.String(100))
-    social_background = db.Column(db.String(200))
-    phone_number = db.Column(db.String(10))
+    age = db.Column(db.Integer, nullable=False)
+    gender = db.Column(db.String(10), nullable=False)
+    location = db.Column(db.String(100), nullable=False)
+    social_background = db.Column(db.String(200), nullable=False)
+    phone_number = db.Column(db.String(10), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    image_url=db.Column(db.String(300),nullable=True)
 
     def __repr__(self):
         return f'<Profile {self.full_name}>'
@@ -52,7 +58,9 @@ class Profile(db.Model):
             "gender": self.gender,
             "location": self.location,
             "social_background": self.social_background,
-            "user_id": self.user_id
+            "phone_number":self.phone_number,
+            "user_id": self.user_id,
+            "image_url":self.image_url
         }
 
 class Record(db.Model):  # Renamed from County to avoid conflict
@@ -69,8 +77,8 @@ class Record(db.Model):  # Renamed from County to avoid conflict
             'id': self.id,
             'county': self.county,
             'category': self.category,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None
         }
 
 class CountyStatistics(db.Model):
@@ -82,16 +90,18 @@ class CountyStatistics(db.Model):
     employment = db.Column(db.Integer, nullable=False)
     social_integration = db.Column(db.Integer, nullable=False)
 
-    county = db.relationship('Record', backref=db.backref('statistics', uselist=False, cascade="all, delete"))  # Fixed reference
+    county = db.relationship('Record', backref=db.backref('statistics', uselist=False, cascade="all, delete"), lazy="joined")
 
     def serialize(self):
         return {
             'id': self.id,
             'county_id': self.county_id,
+            'county': self.county.county if self.county else None,  # Include county name
             'poverty': self.poverty,
             'employment': self.employment,
             'social_integration': self.social_integration
         }
+
 
 class TokenBlocklist(db.Model):
     __tablename__ = "token_blocklist"
