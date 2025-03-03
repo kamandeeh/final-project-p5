@@ -8,9 +8,9 @@ import CountyPage from "./pages/County";
 import Donate from "./pages/Donate";
 import WhoWeAre from "./pages/WhoWeAre";
 import Contactus from "./pages/Contact";
-import Profile from "./pages/Profile";
+import ProfilePage from "./pages/Profile";
 import Login from "./pages/Login";
-import Navbar from "./components/Navbar";
+import Navbar from "./components/Navbar"; 
 import Footer from "./components/Footer";
 import Signup from "./pages/Register";
 import CountyBarGraph from "./pages/CountyGraph";
@@ -18,9 +18,11 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { UserProvider } from "./context/UserContext";
 import { RecordsProvider } from "./context/RecordContext";
 import "./index.css";
+import ProfileForm from "./pages/ProfileForm";
 
 export default function App() {
 
+  const clientId = "529215531106-p08jdklrqjqt910j368tuuhjkdhqcjq6.apps.googleusercontent.com"; 
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
@@ -37,13 +39,14 @@ export default function App() {
               <Route path="/get-involved/records" element={<CountyPage />} />
               <Route path="/get-involved/donate" element={<Donate />} />
               <Route path="/contact" element={<Contactus />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/profile-form" element={<ProfileForm />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Signup />} />
               <Route path="/aboutus" element={<AboutUs />} />
               <Route path="/records" element={<CountyPage />} />
               <Route path="/donate" element={<Donate />} />
-              <Route path="/county/:county/bar_graph" element={<CountyBarGraph />} />
+              <Route path="/county_stats" element={<CountyBarGraph />} />
               <Route path="/management-team" element={<ManagementTeam />} />
             </Routes>
             <Footer />

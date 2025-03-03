@@ -1,52 +1,40 @@
-import { useState } from "react";
-import { useUser } from "../context/UserContext";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithGoogle, signInWithGithub } from "../../firebase";
+import { useUser } from "../context/UserContext";
+import { signInWithGoogle, signInWithGithub, handleRedirectResult, listenForAuthChanges } from "../../firebase";
 import { BsGoogle, BsGithub } from "react-icons/bs";
 
 const Login = () => {
-  const { login } = useUser(); 
+  const { user, setUser, login } = useUser(); 
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
+  useEffect(() => {
+    handleRedirectResult(setUser); // Handle redirected login users
+    listenForAuthChanges(setUser); // Listen for auth state changes
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      navigate("/profile-form"); // Redirect logged-in users
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    if (!login) {
-      console.error("Login function is undefined");
-      return;
-    }
-
-    const result = await login(email, password);
-    if (result.success) {
-      navigate("/");
-    } else {
-      setError(result.error);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
     try {
-      const user = await signInWithGoogle();
-      console.log("Google Login Success:", user);
-      navigate("/");
+      const result = await login(email, password);
+      if (result.success) {
+        navigate("/profile-form");
+      } else {
+        throw new Error(result.error || "Login failed");
+      }
     } catch (err) {
-      setError("Google authentication failed.");
-      console.error(err);
-    }
-  };
-
-  const handleGithubLogin = async () => {
-    try {
-      const user = await signInWithGithub();
-      console.log("GitHub Login Success:", user);
-      navigate("/");
-    } catch (err) {
-      setError("GitHub authentication failed.");
-      console.error(err);
+      setError(err.message);
     }
   };
 
@@ -83,11 +71,17 @@ const Login = () => {
         <hr />
         <p className="text-center">Or login with:</p>
         <div className="d-flex justify-content-center">
-          <button className="btn btn-danger me-2" onClick={handleGoogleLogin}>
-            <BsGoogle /> Continue with Google
+          <button 
+            className="btn btn-danger me-2 d-flex align-items-center"
+            onClick={signInWithGoogle}
+          >
+            <BsGoogle className="me-2" /> Google
           </button>
-          <button className="btn btn-dark" onClick={handleGithubLogin}>
-            <BsGithub /> Continue with GitHub
+          <button 
+            className="btn btn-dark d-flex align-items-center"
+            onClick={signInWithGithub}
+          >
+            <BsGithub className="me-2" /> GitHub
           </button>
         </div>
       </div>

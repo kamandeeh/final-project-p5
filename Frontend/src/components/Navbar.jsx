@@ -2,8 +2,14 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHouse, faUser, faRightFromBracket, faAngleDown } from "@fortawesome/free-solid-svg-icons";
-import "./Navbar.css"; // Ensure styling is properly linked
+import {
+  faHouse,
+  faUser,
+  faRightFromBracket,
+  faAngleDown,
+  faGaugeHigh, // Admin icon
+} from "@fortawesome/free-solid-svg-icons";
+import "./Navbar.css";
 
 const Navbar = () => {
   const { user, logout } = useUser();
@@ -13,9 +19,6 @@ const Navbar = () => {
 
   // Toggle mobile menu
   const toggleMenu = () => setMenuOpen(!menuOpen);
-
-  // Close menu on link click (better UX)
-  const handleLinkClick = () => setMenuOpen(false);
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary px-4 py-3 shadow">
@@ -34,12 +37,12 @@ const Navbar = () => {
         <div className={`collapse navbar-collapse ${menuOpen ? "show" : ""}`}>
           <ul className="navbar-nav ms-auto align-items-center">
             <li className="nav-item">
-              <Link className="nav-link text-white fw-semibold" to="/" onClick={handleLinkClick}>
+              <Link className="nav-link text-white fw-semibold" to="/">
                 <FontAwesomeIcon icon={faHouse} /> Home
               </Link>
             </li>
 
-            {/* Who We Are Dropdown (Hidden Button) */}
+            {/* Who We Are Dropdown */}
             <li className="nav-item dropdown">
               <span
                 className="nav-link text-white fw-semibold dropdown-toggle"
@@ -50,13 +53,21 @@ const Navbar = () => {
               </span>
               {whoWeAreDropdown && (
                 <ul className="dropdown-menu show">
-                  <li><Link className="dropdown-item" to="/aboutus" onClick={handleLinkClick}>About Us</Link></li>
-                  <li><Link className="dropdown-item" to="/management-team" onClick={handleLinkClick}>Management Team</Link></li>
+                  <li>
+                    <Link className="dropdown-item" to="/aboutus">
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link className="dropdown-item" to="/management-team">
+                      Management Team
+                    </Link>
+                  </li>
                 </ul>
               )}
             </li>
 
-            {/* Get Involved Dropdown (Hidden Button) */}
+            {/* Get Involved Dropdown */}
             <li className="nav-item dropdown">
               <span
                 className="nav-link text-white fw-semibold dropdown-toggle"
@@ -67,23 +78,40 @@ const Navbar = () => {
               </span>
               {getInvolvedDropdown && (
                 <ul className="dropdown-menu show">
-                  <li><Link className="dropdown-item" to="/records" onClick={handleLinkClick}>Records</Link></li>
-                  <li><Link className="dropdown-item" to="/donate" onClick={handleLinkClick}>Donate</Link></li>
+                  <li>
+                    <Link className="dropdown-item" to="/county_stats">
+                      Records
+                    </Link>
+                  </li>
+                  <li>
+                    <Link className="dropdown-item" to="/donate">
+                      Donate
+                    </Link>
+                  </li>
                 </ul>
               )}
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link text-white fw-semibold" to="/contact" onClick={handleLinkClick}>
+              <Link className="nav-link text-white fw-semibold" to="/contact">
                 Contact Us
               </Link>
             </li>
+
+            {/* Admin Dashboard (Only for Admins) */}
+            {user?.is_admin && (
+              <li className="nav-item">
+                <Link className="nav-link text-warning fw-semibold" to="/admin/dashboard">
+                  <FontAwesomeIcon icon={faGaugeHigh} /> Admin Dashboard
+                </Link>
+              </li>
+            )}
 
             {/* Profile/Login */}
             {user ? (
               <>
                 <li className="nav-item">
-                  <Link className="nav-link text-white fw-semibold" to="/profile" onClick={handleLinkClick}>
+                  <Link className="nav-link text-white fw-semibold" to="/profile">
                     <FontAwesomeIcon icon={faUser} /> Profile
                   </Link>
                 </li>
@@ -96,12 +124,12 @@ const Navbar = () => {
             ) : (
               <>
                 <li className="nav-item">
-                  <Link className="nav-link text-white fw-semibold" to="/login" onClick={handleLinkClick}>
+                  <Link className="nav-link text-white fw-semibold" to="/login">
                     Login
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link text-white fw-semibold" to="/register" onClick={handleLinkClick}>
+                  <Link className="nav-link text-white fw-semibold" to="/register">
                     Register
                   </Link>
                 </li>
