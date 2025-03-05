@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_migrate import Migrate
-from .models import db, TokenBlocklist
+from models import db, TokenBlocklist
 from datetime import timedelta
 from flask_jwt_extended import JWTManager
 import os
@@ -8,7 +8,7 @@ from flask_cors import CORS
 from flask_mail import Mail
 import firebase_admin
 from firebase_admin import credentials
-from Backend.extensions import mail
+from extensions import mail
 
 firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS")
 
@@ -19,7 +19,7 @@ cred = credentials.Certificate(firebase_credentials_path)
 firebase_admin.initialize_app(cred)
 
 app = Flask(__name__)
-
+application = app 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(basedir, 'app.db')}"
 
@@ -52,7 +52,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER")
 
 mail = Mail(app)
 
-from Backend.Views import *
+from Views import *
 
 app.register_blueprint(user_bp)
 app.register_blueprint(record_bp)

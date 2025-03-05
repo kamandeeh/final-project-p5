@@ -1,5 +1,5 @@
 from flask import jsonify, request, Blueprint
-from Backend.models import db, User, TokenBlocklist
+from models import db, User, TokenBlocklist
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timezone
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
