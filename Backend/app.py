@@ -10,7 +10,7 @@ import firebase_admin
 from firebase_admin import credentials
 from extensions import mail
 
-firebase_credentials_path="/home/zuruel/p5-project/final-project-p5/Backend/poverty-line-5ed46-firebase-adminsdk-fbsvc-fa9a2b2116.json"
+firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS")
 
 if not firebase_credentials_path:
     raise ValueError("FIREBASE_CREDENTIALS environment variable not set.")
@@ -19,7 +19,7 @@ cred = credentials.Certificate(firebase_credentials_path)
 firebase_admin.initialize_app(cred)
 
 app = Flask(__name__)
-application = app 
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(basedir, 'app.db')}"
 
