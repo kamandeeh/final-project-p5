@@ -10,7 +10,7 @@ import firebase_admin
 from firebase_admin import credentials
 from extensions import mail
 
-firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS")
+firebase_credentials_path="/home/zuruel/p5-project/final-project-p5/Backend/poverty-line-5ed46-firebase-adminsdk-fbsvc-fa9a2b2116.json"
 
 if not firebase_credentials_path:
     raise ValueError("FIREBASE_CREDENTIALS environment variable not set.")
