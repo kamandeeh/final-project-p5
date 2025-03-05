@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 
 const ProfileForm = () => {
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const navigate = useNavigate();
   
   const [profileData, setProfileData] = useState({
@@ -13,38 +13,33 @@ const ProfileForm = () => {
     location: "",
     social_background: "",
     phone_number: "",
-    image_url: "",  // Expecting a string, not a file
+    image_url: "",
   });
 
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !user.user_id) {
-      console.error("User ID is missing or undefined!");
-      return;
-    }
+    if (!user) return navigate("/login"); // Ensure user is logged in
 
-    const fetchProfile = async () => {
-      console.log(`Fetching profile for User ID: ${user.user_id}`);
+    // Check if user already has a profile
+    const checkProfile = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/profile/${user.user_id}`);
-        if (!response.ok) throw new Error("Failed to fetch profile");
-
+        const response = await fetch(`http://127.0.0.1:5000/profile/${user.id}`);
         const data = await response.json();
-        console.log("Fetched profile:", data);
 
-        setProfileData((prev) => ({
-          ...prev,
-          ...data.profile,
-        }));
+        if (response.ok && data.profile_exists) {
+          navigate("/"); // Redirect to home if profile exists
+        } else {
+          setLoading(false); // Show form if no profile
+        }
       } catch (error) {
-        console.error("Error fetching profile:", error.message);
-        setError("Could not fetch profile. Please try again.");
+        console.error("Error checking profile:", error);
       }
     };
 
-    fetchProfile();
-  }, [user]);
+    checkProfile();
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     setProfileData({
@@ -57,39 +52,47 @@ const ProfileForm = () => {
     e.preventDefault();
     setError(null);
 
-    if (!user || !user.user_id) {  
-      setError("User ID is missing!");
+    if (!user || !user.id) {
+      setError("User authentication failed. Please log in.");
       return;
     }
 
     const payload = {
       ...profileData,
-      user_id: user.user_id, 
+      user_id: user.id,
     };
 
     try {
       const response = await fetch("http://127.0.0.1:5000/profile", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error("Failed to submit profile");
 
-      console.log("Profile submitted successfully!");
-      navigate("/profile"); // Redirect after success
+      // ✅ Update `profiles_completed` in user table
+      await fetch(`http://127.0.0.1:5000/users/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profiles_completed: true }),
+      });
+
+      console.log("✅ Profile created successfully!");
+      setUser({ ...user, profiles_completed: true }); // Update context
+      navigate("/"); // Redirect to home page
     } catch (error) {
-      console.error("Error submitting profile:", error.message);
-      setError(error.message);
+      console.error("🚨 Error submitting profile:", error.message);
+      setError("Failed to create profile. Please try again.");
     }
   };
+
+  if (loading) return <p>Loading...</p>; // Prevent showing form while checking
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
       <div className="card p-4 shadow-lg w-100" style={{ maxWidth: "400px" }}>
-        <h2 className="text-center mb-3">Profile Form</h2>
+        <h2 className="text-center mb-3">Create Profile</h2>
         {error && <p className="text-danger text-center">{error}</p>}
         <form onSubmit={handleSubmit}>
           <input type="text" name="full_name" value={profileData.full_name} onChange={handleChange} placeholder="Full Name" className="form-control mb-2" required />

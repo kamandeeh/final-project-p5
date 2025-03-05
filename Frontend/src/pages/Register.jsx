@@ -11,25 +11,28 @@ const SignupPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
   
     const userData = { username, email, password };
   
     try {
       const success = await register(userData);
       if (success) {
-        console.log("Navigating to login page");
-        navigate("/profile-form"); 
+        setSuccess("Registration successful! Redirecting...");
+        setTimeout(() => {
+          alert("Login Successful!!")
+          navigate("/login"); 
+        }, 2000); // Show success message for 2 seconds before redirecting
       }
     } catch (error) {
       setError("Signup failed. Please try again.");
     }
   };
-
-  
 
   const handleSocialAuth = async (provider, providerName) => {
     try {
@@ -49,7 +52,10 @@ const SignupPage = () => {
           throw new Error("Failed to store user data");
         }
 
-        navigate("/profile-form");
+        setSuccess("Signup successful! Redirecting...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       }
     } catch (err) {
       setError(err.message);
@@ -60,7 +66,10 @@ const SignupPage = () => {
     <div className="container d-flex justify-content-center align-items-center vh-100">
       <div className="card p-4 shadow-lg w-100" style={{ maxWidth: "400px" }}>
         <h2 className="text-center mb-3">Sign Up</h2>
-        {error && <p className="text-danger text-center">{error}</p>}
+        
+        {success && <div className="alert alert-success text-center">{success}</div>}
+        {error && <div className="alert alert-danger text-center">{error}</div>}
+
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="form-label">Username</label>
@@ -96,6 +105,7 @@ const SignupPage = () => {
             Sign Up
           </button>
         </form>
+        
         <div className="d-flex justify-content-center mt-3 gap-2">
           <button 
             onClick={() => handleSocialAuth(signInWithGoogle, "google")} 
@@ -110,6 +120,7 @@ const SignupPage = () => {
             <BsGithub className="me-2" /> GitHub
           </button>
         </div>
+
         <p className="text-center mt-3">
           Already have an account? <a href="/login" className="text-primary">Login</a>
         </p>

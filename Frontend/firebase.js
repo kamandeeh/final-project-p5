@@ -1,7 +1,12 @@
+// firebase.js (Frontend)
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { 
-  getAuth, GoogleAuthProvider, GithubAuthProvider, 
-  signInWithPopup, getRedirectResult, signOut, onAuthStateChanged 
+import {
+  getAuth,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
@@ -15,7 +20,6 @@ const firebaseConfig = {
   measurementId: "G-V6N9PXQXNB"
 };
 
-// Initialize Firebase
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 const analytics = getAnalytics(app);
@@ -23,134 +27,88 @@ const analytics = getAnalytics(app);
 const googleProvider = new GoogleAuthProvider();
 const githubProvider = new GithubAuthProvider();
 
-/** 🔹 Handle Redirect Authentication (Google & GitHub) */
-export const handleRedirectResult = async (setUser) => {
-  try {
-    const result = await getRedirectResult(auth);
-    if (result?.user) {
-      console.log("User after redirect:", result.user);
-      await sendUserToBackend(result.user, setUser);
-    }
-  } catch (error) {
-    console.error("Error handling redirect result:", error.message);
-  }
-};
-
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-
-    // ✅ Ensure user exists before getting ID token
-    if (!result.user) {
-      throw new Error("User authentication failed: No user returned from Firebase.");
-    }
-
-    const idToken = await result.user.getIdToken();
-    
-    if (!idToken) {
-      throw new Error("No Firebase ID token received");
-    }
-
-    console.log("Google Sign-In: ID Token:", idToken);
-    return { user: result.user, idToken };
+    console.log("Google Login Success:", result.user);
+    await sendUserToBackend(result.user);
   } catch (error) {
-    console.error("Google Sign-In Error:", error);
-    throw error;
+    console.error("Google Login Error:", error.message);
   }
 };
-
-
 
 export const signInWithGithub = async () => {
   try {
     const result = await signInWithPopup(auth, githubProvider);
+    console.log("GitHub Login Success:", result.user);
+    await sendUserToBackend(result.user);
 
-    // ✅ Ensure user exists before getting ID token
-    if (!result.user) {
-      throw new Error("User authentication failed: No user returned from Firebase.");
+    if (window.opener) {
+      window.close();
+    } else {
+      console.warn("Window close blocked by COOP policy.");
     }
-
-    const idToken = await result.user.getIdToken();
-    
-    if (!idToken) {
-      throw new Error("No Firebase ID token received");
-    }
-
-    console.log("GitHub Sign-In: ID Token:", idToken);
-
-    const response = await fetch("http://127.0.0.1:5000/social_login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_token: idToken }),
-    });
-
-    const data = await response.json();
-    console.log("GitHub Auth Response:", data);
   } catch (error) {
-    console.error("GitHub Sign-In Error:", error);
+    console.error("GitHub Login Error:", error.message);
   }
 };
 
-
-/** 🔹 Logout */
 export const logout = async () => {
   try {
     await signOut(auth);
     console.log("User logged out from Firebase");
   } catch (error) {
-    console.error("Firebase logout error:", error);
+    console.error("Firebase logout error:", error.message);
   }
 };
 
 async function sendUserToBackend(user, setUser) {
   try {
     const token = await user.getIdToken();
-    
     console.log("Sending request with token:", token);
 
     const response = await fetch("http://127.0.0.1:5000/social_login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",  // ✅ Ensure this is set
-        "Accept": "application/json",
-      },
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({
         email: user.email,
         username: user.displayName || user.email.split("@")[0],
         uid: user.uid,
       }),
     });
-    
-    if (!response.ok) {
-      throw new Error(`Backend error: ${response.status} ${response.statusText}`);
-    }
+
+    if (!response.ok) throw new Error(`Backend error: ${response.statusText}`);
 
     const data = await response.json();
     console.log("Backend Response:", data);
 
     if (!data.user_id) {
       console.error("Backend did not return a valid user_id!");
+      return;
     }
 
-    setUser && setUser({ ...user, user_id: data.user_id });
-    return { ...user, user_id: data.user_id };
+    if (setUser) {
+      setUser({
+        email: user.email,
+        displayName: user.displayName,
+        uid: user.uid,
+        user_id: data.user_id, // ✅ Correctly store user_id, NOT uid
+      });
+    }
   } catch (error) {
     console.error("Error sending user data to backend:", error);
   }
 }
-
-
-
-
 export const listenForAuthChanges = (setUser) => {
   return onAuthStateChanged(auth, async (user) => {
     if (user) {
-      console.log("User state changed:", user);
-      const backendUser = await sendUserToBackend(user, setUser);
-      setUser(backendUser);  // Ensure state updates correctly
+      console.log("Firebase Auth State Changed:", user);
+      await sendUserToBackend(user, setUser);
     } else {
-      setUser(null);
+      console.log("No user logged in.");
+      if (setUser) {
+          setUser(null);
+      }
     }
   });
 };
-

@@ -1,6 +1,6 @@
 import random
-from models import db, Record, CountyStatistics
-from app import app  # Ensure this imports your Flask app
+from .models import db, Record, CountyStatistics
+from .app import app  # Ensure this imports your Flask app
 
 # Define a function to seed the database
 def seed_county_statistics():

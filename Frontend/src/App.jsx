@@ -4,7 +4,7 @@ import Home from "./pages/Home";
 import AboutUs from "./pages/Aboutus";
 import ManagementTeam from "./pages/ManagmentTeam";
 import GetInvolved from "./pages/Getinvolved";
-import CountyPage from "./pages/County";
+import CountyPage from "./pages/AdminDashboard";
 import Donate from "./pages/Donate";
 import WhoWeAre from "./pages/WhoWeAre";
 import Contactus from "./pages/Contact";

@@ -83,11 +83,6 @@ const Navbar = () => {
                       Records
                     </Link>
                   </li>
-                  <li>
-                    <Link className="dropdown-item" to="/donate">
-                      Donate
-                    </Link>
-                  </li>
                 </ul>
               )}
             </li>

@@ -1,10 +1,14 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebook, faTwitter, faInstagram, faLinkedin } from "@fortawesome/free-brands-svg-icons";
-import { faEnvelope, faPhone } from "@fortawesome/free-solid-svg-icons";
+import { faEnvelope, faPhone, faGaugeHigh } from "@fortawesome/free-solid-svg-icons";
+import { Link } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const Footer = () => {
+  const { user } = useUser(); // Get user context
+
   return (
     <footer className="bg-dark text-white py-5" style={{ backgroundColor: "#34495e" }}>
       <div className="container">
@@ -19,10 +23,19 @@ const Footer = () => {
           <div className="col-md-4 mb-4">
             <h5 className="fw-bold">Quick Links</h5>
             <ul className="list-unstyled">
-              <li><a href="#" className="text-light text-decoration-none">About Us</a></li>
-              <li><a href="#" className="text-light text-decoration-none">Our Mission</a></li>
-              <li><a href="#" className="text-light text-decoration-none">Get Involved</a></li>
-              <li><a href="#" className="text-light text-decoration-none">Contact</a></li>
+              <li><Link to="/aboutus" className="text-light text-decoration-none">About Us</Link></li>
+              <li><Link to="/our-mission" className="text-light text-decoration-none">Our Mission</Link></li>
+              <li><Link to="/get-involved" className="text-light text-decoration-none">Get Involved</Link></li>
+              <li><Link to="/contact" className="text-light text-decoration-none">Contact</Link></li>
+
+              {/* Admin Dashboard Link (Only for Admins) */}
+              {user?.is_admin && (
+                <li>
+                  <Link to="/admin/dashboard" className="text-warning text-decoration-none fw-bold">
+                    <FontAwesomeIcon icon={faGaugeHigh} className="me-2" /> Admin Dashboard
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -30,10 +43,10 @@ const Footer = () => {
           <div className="col-md-4">
             <h5 className="fw-bold">Contact Us</h5>
             <p className="mb-1">
-              <FontAwesomeIcon icon={faEnvelope} className="me-2 text-warning" /> hello@reallygreatsite.com
+              <FontAwesomeIcon icon={faEnvelope} className="me-2 text-warning" /> blahfoundation@gmail.com
             </p>
             <p>
-              <FontAwesomeIcon icon={faPhone} className="me-2 text-warning" /> (123) 456-7890
+              <FontAwesomeIcon icon={faPhone} className="me-2 text-warning" /> +254 768 323 735
             </p>
 
             {/* Social Icons */}

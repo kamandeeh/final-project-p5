@@ -4,6 +4,10 @@ import base64
 import datetime
 import os
 from requests.auth import HTTPBasicAuth
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Define Flask Blueprint
 mpesa_bp = Blueprint("mpesa_bp", __name__)
@@ -13,25 +17,42 @@ CONSUMER_KEY = os.getenv("CONSUMER_KEY")
 CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
 PASSKEY = os.getenv("PASSKEY")
 CALLBACK_URL = os.getenv("CALLBACK_URL")
+BUSINESS_SHORTCODE = os.getenv("BUSINESS_SHORTCODE", "174379")  # Default to 174379 (M-Pesa Sandbox)
 
-# Business Shortcode for Sandbox
-BUSINESS_SHORTCODE = "174379"
+# Debugging: Print env variables to check if they are loaded (REMOVE in production)
+print(f"CONSUMER_KEY: {CONSUMER_KEY}")
+print(f"CONSUMER_SECRET: {CONSUMER_SECRET}")
+print(f"PASSKEY: {PASSKEY}")
+print(f"CALLBACK_URL: {CALLBACK_URL}")
+print(f"BUSINESS_SHORTCODE: {BUSINESS_SHORTCODE}")
+
+# Check for missing environment variables
+if not CONSUMER_KEY or not CONSUMER_SECRET or not PASSKEY or not CALLBACK_URL:
+    raise ValueError("❌ Missing environment variables! Ensure CONSUMER_KEY, CONSUMER_SECRET, PASSKEY, and CALLBACK_URL are set.")
 
 def get_access_token():
+    """Generate an OAuth access token from Safaricom API."""
     url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-    response = requests.get(url, auth=HTTPBasicAuth(CONSUMER_KEY, CONSUMER_SECRET))
     
-    print("Response Status:", response.status_code)
-    print("Response Data:", response.text)
+    try:
+        response = requests.get(url, auth=HTTPBasicAuth(CONSUMER_KEY, CONSUMER_SECRET))
+        response_data = response.json()
 
-    if response.status_code == 200:
-        return response.json().get("access_token")
-    else:
+        # Debugging Output
+        print("Access Token Response:", response_data)
+
+        if response.status_code == 200:
+            return response_data.get("access_token")
+        else:
+            return None
+    except Exception as e:
+        print("❌ Error getting access token:", str(e))
         return None
 
 
 @mpesa_bp.route("/stkpush", methods=["POST"])
 def stk_push():
+    """Initiate M-Pesa STK Push payment request."""
     data = request.json
     phone_number = data.get("phone_number")
     amount = data.get("amount")
@@ -43,16 +64,17 @@ def stk_push():
     if not access_token:
         return jsonify({"error": "Failed to get access token"}), 500
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    password = base64.b64encode((BUSINESS_SHORTCODE + PASSKEY + timestamp).encode()).decode()
+    # Generate timestamp
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")  
+    print(f"Generated TIMESTAMP: {timestamp}")
 
-    url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+    # Ensure all values are strings before concatenation
+    password_string = f"{BUSINESS_SHORTCODE}{PASSKEY}{timestamp}"
+    password = base64.b64encode(password_string.encode()).decode()
     
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
-    }
-    
+    print(f"Generated PASSWORD: {password}")  # Debugging
+
+    # STK Push request payload
     payload = {
         "BusinessShortCode": BUSINESS_SHORTCODE,
         "Password": password,
@@ -61,14 +83,27 @@ def stk_push():
         "Amount": int(amount),
         "PartyA": phone_number,
         "PartyB": BUSINESS_SHORTCODE,
-        "PhoneNumber": phone_number,  
+        "PhoneNumber": phone_number,
         "CallBackURL": CALLBACK_URL,
         "AccountReference": "Test Payment",
         "TransactionDesc": "M-Pesa STK Push Payment"
     }
 
     print("STK Push Payload:", payload)  # Debugging
-    response = requests.post(url, json=payload, headers=headers)
-    print("STK Push Response:", response.text)  # Debugging
-    
-    return jsonify(response.json())
+
+    url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response_data = response.json()
+
+        print("STK Push Response:", response_data)  # Debugging
+
+        return jsonify(response_data)
+    except Exception as e:
+        print("❌ Error during STK Push request:", str(e))
+        return jsonify({"error": "Failed to process STK Push request"}), 500

@@ -17,12 +17,6 @@ const Home = () => {
         <div className="content">
           <h1 className="display-4 fw-bold">Welcome to BLAH Foundation</h1>
           <p className="fs-4 mt-3">Empowering Communities for a Better Tomorrow</p>
-          <button
-            className="btn btn-warning btn-lg mt-4"
-            onClick={scrollToAbout}
-          >
-            Learn More
-          </button>
         </div>
       </section>
 
