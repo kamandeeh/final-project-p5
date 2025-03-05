@@ -10,14 +10,32 @@ import firebase_admin
 from firebase_admin import credentials
 from extensions import mail
 
-# ✅ Use Absolute Path for Firebase Credentials
-firebase_credentials_path = "/home/zuruel/p5-project/final-project-p5/Backend/poverty-line-5ed46-firebase-adminsdk-fbsvc-fa9a2b2116.json"
+# Add debugging section to troubleshoot file access
+print("=== DEBUGGING FILE ACCESS ===")
+print(f"Current working directory: {os.getcwd()}")
 
+# Test file access directly
+firebase_credentials_path = "/home/zuruel/p5-project/final-project-p5/Backend/poverty-line-5ed46-firebase-adminsdk-fbsvc-fa9a2b2116.json"
+print(f"File exists: {os.path.exists(firebase_credentials_path)}")
+print(f"File is readable: {os.access(firebase_credentials_path, os.R_OK)}")
+
+# Try to read the file
+try:
+    with open(firebase_credentials_path, 'r') as f:
+        # Just read a few characters to verify we can access it
+        print(f"File can be read: {f.read(10)}...")
+except Exception as e:
+    print(f"Error reading file: {e}")
+print("=== END DEBUGGING ===")
+
+# ✅ Use Absolute Path for Firebase Credentials
 if not os.path.exists(firebase_credentials_path):
     raise FileNotFoundError(f"Firebase credentials file not found: {firebase_credentials_path}")
 
 cred = credentials.Certificate(firebase_credentials_path)
 firebase_admin.initialize_app(cred)
+
+# Rest of your code remains the same...
 
 # ✅ Initialize Flask App
 app = Flask(__name__)
