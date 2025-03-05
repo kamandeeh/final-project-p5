@@ -11,7 +11,7 @@ const AdminDashboard = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:5000/county_statistics");
+      const response = await axios.get("https://final-project-p5.onrender.com/county_statistics");
       setStats(response.data);
     } catch (error) {
       console.error("Error fetching statistics:", error);
@@ -25,7 +25,7 @@ const AdminDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const endpoint = editId ? `/county_statistics/${editId}` : "/county_statistics";
+      const endpoint = editId ? `https://final-project-p5.onrender.com/county_statistics/${editId}` : "https://final-project-p5.onrender.com/county_statistics";
       const method = editId ? "put" : "post";
       await axios[method](`http://127.0.0.1:5000${endpoint}`, formData, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -40,7 +40,7 @@ const AdminDashboard = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://127.0.0.1:5000/county_statistics/${id}`, {
+      await axios.delete(`https://final-project-p5.onrender.com/county_statistics/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       fetchStatistics();

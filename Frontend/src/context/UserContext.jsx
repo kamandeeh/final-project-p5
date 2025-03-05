@@ -30,7 +30,7 @@ export const UserProvider = ({ children }) => {
       }
 
       try {
-        const response = await fetch("http://127.0.0.1:5000/current_user", {
+        const response = await fetch("https://final-project-p5.onrender.com/current_user", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -76,7 +76,7 @@ export const UserProvider = ({ children }) => {
   // Register a new user
   const register = async (userData) => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/register", {
+      const response = await fetch("https://final-project-p5.onrender.com/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
@@ -98,7 +98,7 @@ export const UserProvider = ({ children }) => {
   // Login user with email & password
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/login", {
+      const response = await fetch("https://final-project-p5.onrender.com/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -142,7 +142,7 @@ export const UserProvider = ({ children }) => {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/social_login", {
+      const response = await fetch("https://final-project-p5.onrender.com/social_login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +180,7 @@ export const UserProvider = ({ children }) => {
   // Check if user has a profile and redirect accordingly
   const checkUserProfile = async (userId) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5000/profile/${userId}`);
+      const response = await fetch(`https://final-project-p5.onrender.com/profile/${userId}`);
       if (response.ok) {
         navigate("/");
       } else {
@@ -196,7 +196,7 @@ export const UserProvider = ({ children }) => {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch(`http://127.0.0.1:5000/users/${userId}`, {
+      const response = await fetch(`https://final-project-p5.onrender.com/users/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

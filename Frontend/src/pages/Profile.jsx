@@ -24,7 +24,7 @@ const ProfilePage = () => {
 
     const fetchProfile = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/profile/${userId}`);
+        const response = await fetch(`https://final-project-p5.onrender.com/profile/${userId}`);
         if (response.status === 404) {
           setNotFound(true);
           return;
@@ -67,7 +67,7 @@ const ProfilePage = () => {
       <div className="card shadow-lg p-4 w-100" style={{ maxWidth: "500px" }}>
         <div className="text-center">
           <img
-            src={profile.image_url ? `http://127.0.0.1:5000${profile.image_url}` : "/default-avatar.png"}
+            src={profile.image_url ? `https://final-project-p5.onrender.com${profile.image_url}` : "/default-avatar.png"}
             alt="Profile"
             className="rounded-circle shadow"
             style={{

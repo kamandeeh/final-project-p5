@@ -28,14 +28,12 @@ const Footer = () => {
               <li><Link to="/get-involved" className="text-light text-decoration-none">Get Involved</Link></li>
               <li><Link to="/contact" className="text-light text-decoration-none">Contact</Link></li>
 
-              {/* Admin Dashboard Link (Only for Admins) */}
-              {user?.is_admin && (
+
                 <li>
                   <Link to="/admin/dashboard" className="text-warning text-decoration-none fw-bold">
                     <FontAwesomeIcon icon={faGaugeHigh} className="me-2" /> Admin Dashboard
                   </Link>
                 </li>
-              )}
             </ul>
           </div>
 
