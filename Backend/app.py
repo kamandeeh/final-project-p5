@@ -1,41 +1,53 @@
+import os
+import json
 from flask import Flask
 from flask_migrate import Migrate
 from models import db, TokenBlocklist
 from datetime import timedelta
 from flask_jwt_extended import JWTManager
-import os
 from flask_cors import CORS
 from flask_mail import Mail
 import firebase_admin
 from firebase_admin import credentials
 from extensions import mail
 
-# Add debugging section to troubleshoot file access
-print("=== DEBUGGING FILE ACCESS ===")
+# Print debugging information
 print(f"Current working directory: {os.getcwd()}")
 
-# Test file access directly
-firebase_credentials_path = "/home/zuruel/p5-project/final-project-p5/Backend/poverty-line-5ed46-firebase-adminsdk-fbsvc-fa9a2b2116.json"
-print(f"File exists: {os.path.exists(firebase_credentials_path)}")
-print(f"File is readable: {os.access(firebase_credentials_path, os.R_OK)}")
+# Handle Firebase credentials differently based on environment
+if os.environ.get('RENDER'):
+    # Option 1: Use environment variable (recommended for production)
+    if os.environ.get('FIREBASE_CREDENTIALS'):
+        print("Using Firebase credentials from environment variable")
+        cred_dict = json.loads(os.environ.get('FIREBASE_CREDENTIALS'))
+        cred = credentials.Certificate(cred_dict)
+    else:
+        # Option 2: Use relative path within the deployment
+        print("Using Firebase credentials from relative path in Render")
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        firebase_credentials_path = os.path.join(basedir, "poverty-line-5ed46-firebase-adminsdk-fbsvc-fa9a2b2116.json")
+        
+        print(f"Looking for Firebase credentials at: {firebase_credentials_path}")
+        print(f"File exists: {os.path.exists(firebase_credentials_path)}")
+        
+        if not os.path.exists(firebase_credentials_path):
+            raise FileNotFoundError(f"Firebase credentials file not found: {firebase_credentials_path}")
+        
+        cred = credentials.Certificate(firebase_credentials_path)
+else:
+    # Local development path
+    print("Using local development Firebase credentials path")
+    firebase_credentials_path = "/home/zuruel/p5-project/final-project-p5/Backend/poverty-line-5ed46-firebase-adminsdk-fbsvc-fa9a2b2116.json"
+    
+    print(f"Looking for Firebase credentials at: {firebase_credentials_path}")
+    print(f"File exists: {os.path.exists(firebase_credentials_path)}")
+    
+    if not os.path.exists(firebase_credentials_path):
+        raise FileNotFoundError(f"Firebase credentials file not found: {firebase_credentials_path}")
+    
+    cred = credentials.Certificate(firebase_credentials_path)
 
-# Try to read the file
-try:
-    with open(firebase_credentials_path, 'r') as f:
-        # Just read a few characters to verify we can access it
-        print(f"File can be read: {f.read(10)}...")
-except Exception as e:
-    print(f"Error reading file: {e}")
-print("=== END DEBUGGING ===")
-
-# ✅ Use Absolute Path for Firebase Credentials
-if not os.path.exists(firebase_credentials_path):
-    raise FileNotFoundError(f"Firebase credentials file not found: {firebase_credentials_path}")
-
-cred = credentials.Certificate(firebase_credentials_path)
 firebase_admin.initialize_app(cred)
-
-# Rest of your code remains the same...
 
 # ✅ Initialize Flask App
 app = Flask(__name__)
@@ -58,7 +70,8 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
 
 # ✅ Allow Frontend URL
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+cors_origin = os.getenv("FRONTEND_URL", "http://localhost:5173")
+CORS(app, resources={r"/*": {"origins": cors_origin}}, supports_credentials=True)
 mail.init_app(app)
 
 # ✅ Configure Flask-Mail
