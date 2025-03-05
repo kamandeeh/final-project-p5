@@ -10,14 +10,16 @@ import firebase_admin
 from firebase_admin import credentials
 from extensions import mail
 
-firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS")
+# ✅ Use Absolute Path for Firebase Credentials
+firebase_credentials_path = "/home/zuruel/p5-project/final-project-p5/Backend/poverty-line-5ed46-firebase-adminsdk-fbsvc-fa9a2b2116.json"
 
-if not firebase_credentials_path:
-    raise ValueError("FIREBASE_CREDENTIALS environment variable not set.")
+if not os.path.exists(firebase_credentials_path):
+    raise FileNotFoundError(f"Firebase credentials file not found: {firebase_credentials_path}")
 
-cred = credentials.Certificate(firebase_credentials_path) 
+cred = credentials.Certificate(firebase_credentials_path)
 firebase_admin.initialize_app(cred)
 
+# ✅ Initialize Flask App
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -42,7 +44,7 @@ CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_cred
 mail.init_app(app)
 
 # ✅ Configure Flask-Mail
-app.config['MAIL_SERVER'] =  "smtp.gmail.com"
+app.config['MAIL_SERVER'] = "smtp.gmail.com"
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
@@ -52,6 +54,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER")
 
 mail = Mail(app)
 
+# ✅ Import and Register Blueprints
 from Views import *
 
 app.register_blueprint(user_bp)
@@ -63,6 +66,7 @@ app.register_blueprint(mpesa_bp)
 app.register_blueprint(county_stats_bp)
 app.register_blueprint(contact_bp)
 
+# ✅ JWT Blocklist Check
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
     jti = jwt_payload["jti"]
@@ -79,19 +83,3 @@ def set_headers(response):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
-
-
-
-
-# # ✅ Configure Flask-Mail
-# app.config["MAIL_SERVER"] = "smtp.gmail.com"
-# app.config["MAIL_PORT"] = 587
-# app.config["MAIL_USE_TLS"] = True
-# app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")  # Set in .env
-# app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")  # Set in .env
-# app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
