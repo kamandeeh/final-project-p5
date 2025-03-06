@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, Blueprint, current_app
-from models import db, ContactMessage
+from Backend.models import db, ContactMessage
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from flask_jwt_extended import jwt_required, get_jwt_identity, JWTManager
