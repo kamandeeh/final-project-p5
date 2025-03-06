@@ -44,7 +44,7 @@ firebase_admin.initialize_app(cred)
 app = Flask(__name__)
 application=app
 # Database Configuration
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(basedir, 'app.db')}"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 # Initialize Extensions
