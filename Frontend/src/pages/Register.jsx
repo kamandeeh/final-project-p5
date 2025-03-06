@@ -38,29 +38,37 @@ const SignupPage = () => {
     try {
       const user = await provider();
       if (user) {
+        console.log("Social auth user:", user); // Debugging  
+  
         const response = await fetch("https://final-project-p5.onrender.com/social_login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: user.displayName || "", 
             email: user.email,
+            uid: user.uid,  // Add this line
             provider: providerName,
           }),
         });
-        
+  
+        const responseData = await response.json();
+        console.log("Backend response:", responseData); // Debugging  
+  
         if (!response.ok) {
-          throw new Error("Failed to store user data");
+          throw new Error(responseData.error || "Failed to store user data");
         }
-
+  
         setSuccess("Signup successful! Redirecting...");
         setTimeout(() => {
           navigate("/login");
         }, 2000);
       }
     } catch (err) {
+      console.error("Social auth error:", err); // Debugging
       setError(err.message);
     }
   };
+  
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
