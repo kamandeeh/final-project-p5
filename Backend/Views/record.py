@@ -1,12 +1,12 @@
 from flask import Blueprint, request, jsonify, current_app
-from models import db, Record, User
+from Backend.models import db, Record, User
 from flask_cors import CORS
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from functools import wraps
 import random
 
 record_bp = Blueprint("record_bp", __name__)
-CORS(record_bp, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+CORS(record_bp, supports_credentials=True)
 
 # Admin authentication decorator
 def admin_required(func):

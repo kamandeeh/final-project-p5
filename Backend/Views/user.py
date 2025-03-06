@@ -1,5 +1,5 @@
 from flask import jsonify, request, Blueprint, current_app
-from models import db, User
+from Backend.models import db, User
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_cors import CORS
 from werkzeug.security import check_password_hash
@@ -7,7 +7,7 @@ import jwt
 import datetime
 
 user_bp = Blueprint("user_bp", __name__)
-CORS(user_bp, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+CORS(user_bp, supports_credentials=True)
 
 
 # Fetch all users

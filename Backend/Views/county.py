@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify, current_app
-from models import db, CountyStatistics, User, Record
+from Backend.models import db, CountyStatistics, User, Record
 from flask_cors import CORS
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from functools import wraps
 
 county_stats_bp = Blueprint("county_stats_bp", __name__)
-CORS(county_stats_bp, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(county_stats_bp)
 
 # Admin authentication decorator
 def admin_required(func):
@@ -23,7 +23,6 @@ def admin_required(func):
 @county_stats_bp.route('/county_statistics/<county_identifier>', methods=['GET'])
 def get_county_statistics(county_identifier):
     try:
-        # Check if county_identifier is an integer (county_id) or string (county name)
         if county_identifier.isdigit():
             stats = CountyStatistics.query.filter_by(county_id=int(county_identifier)).all()
         else:
@@ -47,10 +46,10 @@ def get_county_statistics(county_identifier):
         current_app.logger.error(f"Error fetching statistics: {str(e)}")
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
 
-# Create or update county statistics (Admin only)
+# Create county statistics (Admin only)
 @county_stats_bp.route("/county_statistics", methods=['POST'])
 @admin_required
-def create_or_update_statistics():
+def create_statistics():
     try:
         data = request.get_json()
         required_fields = ['county_id', 'poverty', 'employment', 'social_integration']
@@ -60,22 +59,47 @@ def create_or_update_statistics():
         if missing_fields:
             return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
 
-        county_id = data['county_id']
+        # Create new record
+        stats = CountyStatistics(**data)
+        db.session.add(stats)
+        db.session.commit()
+
+        return jsonify({"message": "County statistics created successfully", "statistics": {
+            "county_id": stats.county_id,
+            "poverty": stats.poverty,
+            "employment": stats.employment,
+            "social_integration": stats.social_integration
+        }}), 201
+    except Exception as e:
+        current_app.logger.error(f"Error creating county statistics: {str(e)}")
+        return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
+
+# Update county statistics (Admin only)
+@county_stats_bp.route("/county_statistics/<int:county_id>", methods=['PUT'])
+@admin_required
+def update_statistics(county_id):
+    try:
+        data = request.get_json()
+        required_fields = ['poverty', 'employment', 'social_integration']
+        
+        # Ensure all required fields are present
+        missing_fields = [field for field in required_fields if field not in data or data[field] is None]
+        if missing_fields:
+            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
         stats = CountyStatistics.query.filter_by(county_id=county_id).first()
 
-        if stats:
-            # Update existing record
-            stats.poverty = data['poverty']
-            stats.employment = data['employment']
-            stats.social_integration = data['social_integration']
-        else:
-            # Create new record
-            stats = CountyStatistics(**data)
-            db.session.add(stats)
+        if not stats:
+            return jsonify({"error": "County statistics not found"}), 404
+
+        # Update existing record
+        stats.poverty = data['poverty']
+        stats.employment = data['employment']
+        stats.social_integration = data['social_integration']
 
         db.session.commit()
 
-        return jsonify({"message": "County statistics saved successfully", "statistics": {
+        return jsonify({"message": "County statistics updated successfully", "statistics": {
             "county_id": stats.county_id,
             "poverty": stats.poverty,
             "employment": stats.employment,
@@ -84,3 +108,26 @@ def create_or_update_statistics():
     except Exception as e:
         current_app.logger.error(f"Error updating county statistics: {str(e)}")
         return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
+
+# Fetch county statistics for all counties
+@county_stats_bp.route("/county_statistics", methods=["GET"])
+def get_all_county_statistics():
+    try:
+        # Fetch all statistics from CountyStatistics table
+        stats = CountyStatistics.query.all()
+
+        if not stats:
+            return jsonify({"message": "No statistics found"}), 404
+
+        # Prepare the result for each record
+        results = [{
+            "county_id": stat.county_id,
+            "poverty": stat.poverty,
+            "employment": stat.employment,
+            "social_integration": stat.social_integration
+        } for stat in stats]
+
+        return jsonify(results), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching statistics: {str(e)}")
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500

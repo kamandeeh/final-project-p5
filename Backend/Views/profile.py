@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
-from models import db, Profile, User  # ✅ Import User model
+from Backend.models import db, Profile, User  # ✅ Import User model
 from flask_cors import CORS
 
 profile_bp = Blueprint('profile_bp', __name__)
-CORS(profile_bp, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+CORS(profile_bp, supports_credentials=True)
 
 @profile_bp.route('/profile', methods=['POST'])
 def create_or_update_profile():

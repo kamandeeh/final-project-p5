@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState([]);
-  const [formData, setFormData] = useState({ county_id: "", poverty: "", employment: "", social_integration: "" });
+  const [formData, setFormData] = useState({
+    county_id: "",
+    poverty: "",
+    employment: "",
+    social_integration: "",
+  });
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -14,13 +19,12 @@ const AdminDashboard = () => {
     fetchStatistics();
   }, []);
 
-  // ✅ Check if the user is an admin
   const checkAdmin = () => {
     const token = localStorage.getItem("token");
     const isAdmin = localStorage.getItem("is_admin");
 
     if (!token || !isAdmin) {
-      navigate("/login"); // Redirect if not admin
+      navigate("/login");
     }
   };
 
@@ -28,17 +32,20 @@ const AdminDashboard = () => {
     setLoading(true);
     try {
       const response = await fetch("https://final-project-p5.onrender.com/county_statistics", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        method: "GET",  // Ensure the method is GET
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       if (!response.ok) {
-        throw new Error("Error fetching statistics.");
+        const errorDetails = await response.text();
+        throw new Error(`Error fetching statistics: ${response.status} ${response.statusText}. Details: ${errorDetails}`);
       }
 
       const data = await response.json();
       setStats(data);
       setMessage("Data loaded successfully.");
-      setTimeout(() => setMessage(""), 3000); // Clear message after 3 seconds
     } catch (error) {
       setMessage(error.message || "Error fetching statistics.");
       console.error("Error fetching statistics:", error);
@@ -61,9 +68,9 @@ const AdminDashboard = () => {
       const method = editId ? "PUT" : "POST";
       const response = await fetch(endpoint, {
         method,
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}` 
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(formData),
       });
@@ -73,10 +80,17 @@ const AdminDashboard = () => {
       }
 
       fetchStatistics();
-      setFormData({ county_id: "", poverty: "", employment: "", social_integration: "" });
+      setFormData({
+        county_id: "",
+        poverty: "",
+        employment: "",
+        social_integration: "",
+      });
       setEditId(null);
-      setMessage(editId ? "Statistics updated successfully." : "Statistics added successfully.");
-      setTimeout(() => setMessage(""), 3000); // Clear message after 3 seconds
+      setMessage(
+        editId ? "Statistics updated successfully." : "Statistics added successfully."
+      );
+      setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       setMessage(error.message || "Error saving statistics.");
       console.error("Error saving statistics:", error);
@@ -101,7 +115,7 @@ const AdminDashboard = () => {
 
       fetchStatistics();
       setMessage("Statistic deleted successfully.");
-      setTimeout(() => setMessage(""), 3000); // Clear message after 3 seconds
+      setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       setMessage(error.message || "Error deleting statistic.");
       console.error("Error deleting statistic:", error);
@@ -111,7 +125,12 @@ const AdminDashboard = () => {
   };
 
   const handleEdit = (stat) => {
-    setFormData(stat);
+    setFormData({
+      county_id: stat.county_id,
+      poverty: stat.poverty,
+      employment: stat.employment,
+      social_integration: stat.social_integration,
+    });
     setEditId(stat.id);
   };
 
@@ -196,8 +215,12 @@ const AdminDashboard = () => {
                     <td>{stat.employment}</td>
                     <td>{stat.social_integration}</td>
                     <td>
-                      <button onClick={() => handleEdit(stat)} className="btn btn-warning btn-sm mr-2">Edit</button>
-                      <button onClick={() => handleDelete(stat.id)} className="btn btn-danger btn-sm">Delete</button>
+                      <button onClick={() => handleEdit(stat)} className="btn btn-warning btn-sm mr-2">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(stat.id)} className="btn btn-danger btn-sm">
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

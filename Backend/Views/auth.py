@@ -1,5 +1,5 @@
 from flask import jsonify, request, Blueprint
-from models import db, User, TokenBlocklist
+from Backend.models import db, User, TokenBlocklist
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timezone
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
@@ -8,9 +8,9 @@ import firebase_admin
 from firebase_admin import auth
 
 auth_bp = Blueprint("auth_bp", __name__)
-CORS(auth_bp, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+CORS(auth_bp, supports_credentials=True)
 
-# ✅ Fix Registration - Hash passwords before saving
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -59,7 +59,6 @@ def login():
         }
     })
 
-# ✅ Fix Firebase Social Login
 @auth_bp.route("/auth/firebase", methods=["POST"])
 def firebase_auth():
     data = request.get_json()
@@ -79,7 +78,7 @@ def firebase_auth():
         user = User.query.filter_by(email=email).first()
         if not user:
             user = User(username=username, email=email)
-            user.set_password("social_auth")  # Hash a default password
+            user.set_password("social_auth") 
             db.session.add(user)
             db.session.commit()
 
@@ -91,10 +90,9 @@ def firebase_auth():
         }), 200
 
     except Exception as e:
-        print("Firebase Auth Error:", str(e))  # Debugging
+        print("Firebase Auth Error:", str(e)) 
         return jsonify({"error": "Invalid Firebase token or authentication failed"}), 400
 
-# ✅ Fix Current User Endpoint
 @auth_bp.route("/current_user", methods=["GET"])
 @jwt_required()
 def current_user():
