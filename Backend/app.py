@@ -2,14 +2,14 @@ import os
 import json
 from flask import Flask
 from flask_migrate import Migrate
-from models import db, TokenBlocklist
+from .models import db, TokenBlocklist
 from datetime import timedelta
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
 from flask_cors import CORS
 from flask_mail import Mail
 import firebase_admin
 from firebase_admin import credentials
-from extensions import mail
+from .extensions import mail
 
 # Get the directory of the current script
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -40,48 +40,47 @@ else:
 
 firebase_admin.initialize_app(cred)
 
-# Rest of your code remains unchanged
-
-# Rest of your code remains the same...
-
-# ✅ Initialize Flask App
+# Initialize Flask App
 app = Flask(__name__)
 
-basedir = os.path.abspath(os.path.dirname(__file__))
+# Database Configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(basedir, 'app.db')}"
-
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
+# Initialize Extensions
 db.init_app(app)
 migrate = Migrate(app, db)
 
+# Upload Folder Configuration
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+# JWT Configuration
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "default_jwt_secret")
 app.config["JWT_ALGORITHM"] = "HS256"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
-jwt = JWTManager(app)
+app.config["JWT_TOKEN_LOCATION"] = ["headers"]
 
-# ✅ Allow Frontend URL
+# Initialize JWTManager (ensure you're using the correct one)
+jwt = JWTManager(app)  # Using flask_jwt_extended's JWTManager
+
+# CORS Configuration
 cors_origin = os.getenv("FRONTEND_URL", "http://localhost:5173")
 CORS(app, resources={r"/*": {"origins": cors_origin}}, supports_credentials=True)
-mail.init_app(app)
 
-# ✅ Configure Flask-Mail
+# Flask-Mail Configuration
 app.config['MAIL_SERVER'] = "smtp.gmail.com"
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
-app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD") 
+app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER")
+mail.init_app(app)
 
-mail = Mail(app)
-
-# ✅ Import and Register Blueprints
-from Views import *
+# Import and Register Blueprints
+from .Views import *
 
 app.register_blueprint(user_bp)
 app.register_blueprint(record_bp)
@@ -92,20 +91,31 @@ app.register_blueprint(mpesa_bp)
 app.register_blueprint(county_stats_bp)
 app.register_blueprint(contact_bp)
 
-# ✅ JWT Blocklist Check
+# JWT Blocklist Check - Updated to work with flask_jwt_extended
 @jwt.token_in_blocklist_loader
-def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
-    jti = jwt_payload["jti"]
-    token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()
-    return token is not None
+def check_if_token_revoked(jwt_header, jwt_payload):
+    jti = jwt_payload["jti"]  # Get the JWT ID from the payload
+    token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()  # Check if the token is in the blocklist
+    return token is not None  # If token exists in blocklist, return True to indicate it's revoked
 
-# ✅ Fix COOP/COEP Issues
+
+# Fix COOP/COEP Issues
 @app.after_request
 def set_headers(response):
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
     response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
     response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
     return response
+
+# Add logout route that stores JWT in blocklist
+@app.route("/logout", methods=["POST"])
+@jwt_required()
+def logout():
+    jti = get_jwt_identity()["jti"]
+    token = TokenBlocklist(jti=jti)
+    db.session.add(token)
+    db.session.commit()
+    return jsonify(msg="Successfully logged out")
 
 if __name__ == "__main__":
     app.run(debug=True)

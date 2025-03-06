@@ -19,6 +19,8 @@ import { UserProvider } from "./context/UserContext";
 import { RecordsProvider } from "./context/RecordContext";
 import "./index.css";
 import ProfileForm from "./pages/ProfileForm";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogin from "./pages/AdminLogin";
 
 export default function App() {
 
@@ -28,7 +30,6 @@ export default function App() {
     <GoogleOAuthProvider clientId={clientId}>
       <UserProvider>
         <RecordsProvider>
-          <Router>
             <Navbar />
             <Routes>
               <Route path="/" element={<Home />} />
@@ -48,9 +49,10 @@ export default function App() {
               <Route path="/donate" element={<Donate />} />
               <Route path="/county_stats" element={<CountyBarGraph />} />
               <Route path="/management-team" element={<ManagementTeam />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
             </Routes>
             <Footer />
-          </Router>
         </RecordsProvider>
       </UserProvider>
     </GoogleOAuthProvider>

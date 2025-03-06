@@ -30,7 +30,7 @@ const Footer = () => {
 
 
                 <li>
-                  <Link to="/admin/dashboard" className="text-warning text-decoration-none fw-bold">
+                  <Link to="/admin/login" className="text-warning text-decoration-none fw-bold">
                     <FontAwesomeIcon icon={faGaugeHigh} className="me-2" /> Admin Dashboard
                   </Link>
                 </li>
