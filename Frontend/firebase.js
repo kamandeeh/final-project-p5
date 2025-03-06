@@ -88,7 +88,7 @@ export async function sendUserToBackend(user, setUser = null) {
     const token = await user.getIdToken();
     console.log("Firebase ID Token generated successfully");
 
-    const response = await fetch("http://127.0.0.1:5000/social_login", {
+    const response = await fetch("https://final-project-p5.onrender.com/social_login", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({

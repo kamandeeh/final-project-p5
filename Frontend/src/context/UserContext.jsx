@@ -29,7 +29,7 @@ export const UserProvider = ({ children }) => {
       
       setLoading(true);
       try {
-        const response = await fetch("http://127.0.0.1:5000/current_user", {
+        const response = await fetch("https://final-project-p5.onrender.com/current_user", {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -81,7 +81,7 @@ export const UserProvider = ({ children }) => {
   // Register a new user
   const register = async (userData) => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/register", {
+      const response = await fetch("https://final-project-p5.onrender.com/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
@@ -104,7 +104,7 @@ export const UserProvider = ({ children }) => {
   // Login user with email & password
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/login", {
+      const response = await fetch("https://final-project-p5.onrender.com/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -148,7 +148,7 @@ export const UserProvider = ({ children }) => {
     
     try {
       console.log("Making social login request...");
-      const response = await fetch("http://127.0.0.1:5000/social_login", {
+      const response = await fetch("https://final-project-p5.onrender.com/social_login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -218,7 +218,7 @@ export const UserProvider = ({ children }) => {
     
     try {
       console.log("Checking user profile for ID:", userId);
-      const response = await fetch(`http://127.0.0.1:5000/profile/${userId}`);
+      const response = await fetch(`https://final-project-p5.onrender.com/profile/${userId}`);
       
       console.log("Profile check response status:", response.status);
       
@@ -242,7 +242,7 @@ export const UserProvider = ({ children }) => {
     }
     
     try {
-      const response = await fetch(`http://127.0.0.1:5000/users/${userId}`, {
+      const response = await fetch(`https://final-project-p5.onrender.com/users/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -283,7 +283,7 @@ export const UserProvider = ({ children }) => {
       if (token) {
         // Try to notify the backend about logout
         try {
-          await fetch("http://127.0.0.1:5000/logout", {
+          await fetch("https://final-project-p5.onrender.com/logout", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,

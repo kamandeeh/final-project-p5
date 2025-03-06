@@ -26,7 +26,7 @@ const AdminDashboard = () => {
   const fetchCountyStats = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:5000/county_statistics', {
+      const response = await fetch('https://final-project-p5.onrender.com/county_statistics', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -77,7 +77,7 @@ const AdminDashboard = () => {
     }
     
     try {
-      const response = await fetch(`http://127.0.0.1:5000/county_statistics/${countyId}`, {
+      const response = await fetch(`https://final-project-p5.onrender.com/county_statistics/${countyId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -130,7 +130,7 @@ const AdminDashboard = () => {
       
       if (formMode === 'create') {
         requestBody = { ...formData };
-        response = await fetch('http://127.0.0.1:5000/county_statistics', {
+        response = await fetch('https://final-project-p5.onrender.com/county_statistics', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ const AdminDashboard = () => {
           employment: formData.employment,
           social_integration: formData.social_integration
         };
-        response = await fetch(`http://127.0.0.1:5000/county_statistics/${formData.county_id}`, {
+        response = await fetch(`https://final-project-p5.onrender.com/county_statistics/${formData.county_id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ const AdminDashboard = () => {
     }
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/promote_user", {
+        const response = await fetch("https://final-project-p5.onrender.com/promote_user", {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",

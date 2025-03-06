@@ -8,7 +8,7 @@ export const RecordsProvider = ({ children }) => {
 
   const fetchRecords = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/records");
+      const response = await fetch("https://final-project-p5.onrender.com/records");
 
       if (!response.ok) {
         throw new Error(`Failed to fetch records: ${response.status} ${response.statusText}`);
