@@ -1,5 +1,3 @@
-// src/pages/Login.jsx
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
@@ -17,7 +15,7 @@ const Login = () => {
   const [success, setSuccess] = useState(null);
 
   useEffect(() => {
-    listenForAuthChanges(setUser);
+    listenForAuthChanges(setUser); // Listen for auth changes and update user context
   }, []);
 
   useEffect(() => {
@@ -27,6 +25,7 @@ const Login = () => {
     }
   }, [user]);
 
+  // Function to check the user's profile status after login
   const checkUserProfile = async (userId) => {
     try {
       if (!userId) return;
@@ -37,10 +36,10 @@ const Login = () => {
 
       if (response.ok && data.id) {
         toast.success("Welcome back! Redirecting to home...");
-        setTimeout(() => navigate("/"), 2000);
+        setTimeout(() => navigate("/"), 2000); // Redirect to home after successful login
       } else {
         toast.info("Complete your profile before proceeding.");
-        setTimeout(() => navigate("/profile-form"), 2000);
+        setTimeout(() => navigate("/profile-form"), 2000); // Redirect to profile form if needed
       }
     } catch (error) {
       console.error("Error checking profile:", error);
@@ -48,6 +47,7 @@ const Login = () => {
     }
   };
 
+  // Handle standard login (email/password)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -80,6 +80,7 @@ const Login = () => {
     }
   };
 
+  // Handle social login (Google or GitHub)
   const handleSocialAuth = async (provider) => {
     try {
       let result;
@@ -91,7 +92,7 @@ const Login = () => {
 
       if (!result) throw new Error("Social login failed");
 
-      const token = await result.user.getIdToken();
+      const token = await result.user.getIdToken(); // Get Firebase token
       console.log("Sending request with token:", token);
 
       const response = await fetch("https://final-project-p5.onrender.com/social-login", {
@@ -104,9 +105,9 @@ const Login = () => {
       console.log("Backend Response:", data);
 
       if (response.ok && data.user_id) {
-        setUser({ id: data.user_id, email: result.user.email });
+        setUser({ id: data.user_id, email: result.user.email }); // Set user in context
         toast.success("Social login successful!");
-        checkUserProfile(data.user_id);
+        checkUserProfile(data.user_id); // Check profile after login
       } else {
         throw new Error(data.message || "Social login failed");
       }

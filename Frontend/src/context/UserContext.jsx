@@ -32,13 +32,13 @@ export const UserProvider = ({ children }) => {
         const response = await fetch("https://final-project-p5.onrender.com/current_user", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         if (!response.ok) {
           console.warn("Unauthorized access, logging out...");
           await logout();
           return;
         }
-        
+
         const userData = await response.json();
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
