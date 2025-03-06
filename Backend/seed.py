@@ -1,6 +1,6 @@
 from datetime import datetime
-from .app import db, app
-from .models import Record
+from app import db, app
+from models import Record
 import random
 
 # List of 47 counties in Kenya
