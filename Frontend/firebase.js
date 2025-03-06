@@ -1,4 +1,5 @@
-// firebase.js (Frontend)
+// src/firebase.js
+
 import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   getAuth,
@@ -8,7 +9,6 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDm2uFWikGKRA_hg1E2h07xTLytWnPd0tE",
@@ -22,7 +22,6 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-const analytics = getAnalytics(app);
 
 const googleProvider = new GoogleAuthProvider();
 const githubProvider = new GithubAuthProvider();
@@ -30,31 +29,18 @@ const githubProvider = new GithubAuthProvider();
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    const firebaseUser = result.user;
-    console.log("Google Login Success:", firebaseUser);
-
-    if (firebaseUser && typeof firebaseUser.getIdToken === 'function') {
-      await sendUserToBackend(firebaseUser);
-    } else {
-      console.error("Firebase User object does not have getIdToken method.");
-    }
+    console.log("Google Login Success:", result.user);
+    await sendUserToBackend(result.user);
   } catch (error) {
     console.error("Google Login Error:", error.message);
   }
 };
-
 
 export const signInWithGithub = async () => {
   try {
     const result = await signInWithPopup(auth, githubProvider);
     console.log("GitHub Login Success:", result.user);
     await sendUserToBackend(result.user);
-
-    if (window.opener) {
-      window.close();
-    } else {
-      console.warn("Window close blocked by COOP policy.");
-    }
   } catch (error) {
     console.error("GitHub Login Error:", error.message);
   }
@@ -69,43 +55,18 @@ export const logout = async () => {
   }
 };
 
-async function sendUserToBackend(user, setUser) {
+async function sendUserToBackend(user) {
   try {
-    if (!user || !user.getIdToken) {
-      console.error("Invalid Firebase user object:", user);
-      return;
-    }
-
     const token = await user.getIdToken();
-    console.log("Sending request with token:", token);
-
-    const response = await fetch("http://127.0.0.1:5000/social_login", {
+    const response = await fetch("http://127.0.0.1:5000/social-login", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({
-        email: user.email,
-        username: user.displayName || user.email.split("@")[0],
-        uid: user.uid,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
     });
 
-    if (!response.ok) throw new Error(`Backend error: ${response.statusText}`);
-
     const data = await response.json();
-    console.log("Backend Response:", data);
-
-    if (!data.user_id) {
-      console.error("Backend did not return a valid user_id!");
-      return;
-    }
-
-    if (setUser) {
-      setUser({
-        email: user.email,
-        displayName: user.displayName,
-        uid: user.uid,
-        user_id: data.user_id, // ✅ Correctly store user_id, NOT uid
-      });
+    if (data.user_id) {
+      console.log("User successfully logged in with backend:", data);
     }
   } catch (error) {
     console.error("Error sending user data to backend:", error);
@@ -115,13 +76,10 @@ async function sendUserToBackend(user, setUser) {
 export const listenForAuthChanges = (setUser) => {
   return onAuthStateChanged(auth, async (user) => {
     if (user) {
-      console.log("Firebase Auth State Changed:", user);
-      await sendUserToBackend(user, setUser);
+      await sendUserToBackend(user);
+      setUser({ email: user.email, uid: user.uid });
     } else {
-      console.log("No user logged in.");
-      if (setUser) {
-        setUser(null);
-      }
+      setUser(null);
     }
   });
 };

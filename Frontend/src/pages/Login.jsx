@@ -1,3 +1,5 @@
+// src/pages/Login.jsx
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
@@ -30,7 +32,7 @@ const Login = () => {
       if (!userId) return;
 
       console.log("Checking profile for user ID:", userId);
-      const response = await fetch(`https://final-project-p5.onrender.com/profile/${userId}`);
+      const response = await fetch(`http://127.0.0.1:5000/profile/${userId}`);
       const data = await response.json();
 
       if (response.ok && data.id) {
@@ -55,10 +57,12 @@ const Login = () => {
       const result = await login(email, password);
       console.log("Login response:", result);
 
-      if (result?.user) {
+      if (result?.success) {
         toast.success("Login successful! Redirecting...");
         setTimeout(() => {
-          const storedUser = result.user;  // Use the user returned by the login function
+          const storedUser = JSON.parse(localStorage.getItem("user"));
+          console.log("Stored User after login:", storedUser);
+
           if (storedUser?.id) {
             checkUserProfile(storedUser.id);
           } else {
@@ -67,7 +71,7 @@ const Login = () => {
           }
         }, 1000);
       } else {
-        throw new Error(result?.message || "Login failed");
+        throw new Error(result?.error || "Login failed");
       }
     } catch (err) {
       console.error("Login Error:", err);
@@ -90,14 +94,11 @@ const Login = () => {
       const token = await result.user.getIdToken();
       console.log("Sending request with token:", token);
 
-      const response = await fetch("https://final-project-p5.onrender.com/social-login", {
+      const response = await fetch("http://127.0.0.1:5000/social-login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
       });
-      
 
       const data = await response.json();
       console.log("Backend Response:", data);
