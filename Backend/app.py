@@ -2,14 +2,14 @@ import os
 import json
 from flask import Flask, jsonify
 from flask_migrate import Migrate
-from models import db, TokenBlocklist
+from .models import db, TokenBlocklist
 from datetime import timedelta
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
 from flask_cors import CORS
 from flask_mail import Mail
 import firebase_admin
 from firebase_admin import credentials
-from extensions import mail
+from .extensions import mail
 
 # Get the directory of the current script
 basedir = os.path.abspath(os.path.dirname(__file__))
