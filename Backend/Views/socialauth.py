@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_mail import Message
 from flask_jwt_extended import create_access_token
-from Backend.models import db, User
-from Backend.extensions import mail
+from models import db, User
+from extensions import mail
 import logging
 
 social_bp = Blueprint("social_bp", __name__)

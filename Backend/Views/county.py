@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from Backend.models import db, CountyStatistics, User, Record
+from models import db, CountyStatistics, User, Record
 from flask_cors import CORS
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
