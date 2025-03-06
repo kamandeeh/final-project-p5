@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask
+from flask import Flask, jsonify
 from flask_migrate import Migrate
 from models import db, TokenBlocklist
 from datetime import timedelta
@@ -62,8 +62,8 @@ app.config["JWT_ALGORITHM"] = "HS256"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 app.config["JWT_TOKEN_LOCATION"] = ["headers"]
 
-# Initialize JWTManager (ensure you're using the correct one)
-jwt = JWTManager(app)  # Using flask_jwt_extended's JWTManager
+# Initialize JWTManager with a different variable name to avoid conflicts
+jwt_manager = JWTManager(app)  # Renamed from jwt to jwt_manager
 
 # CORS Configuration
 cors_origin = os.getenv("FRONTEND_URL", "http://localhost:5173")
@@ -91,8 +91,8 @@ app.register_blueprint(mpesa_bp)
 app.register_blueprint(county_stats_bp)
 app.register_blueprint(contact_bp)
 
-# JWT Blocklist Check - Updated to work with flask_jwt_extended
-@jwt.token_in_blocklist_loader
+# JWT Blocklist Check - Updated to work with jwt_manager
+@jwt_manager.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload):
     jti = jwt_payload["jti"]  # Get the JWT ID from the payload
     token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()  # Check if the token is in the blocklist
@@ -111,7 +111,8 @@ def set_headers(response):
 @app.route("/logout", methods=["POST"])
 @jwt_required()
 def logout():
-    jti = get_jwt_identity()["jti"]
+    jwt_payload = get_jwt()  # Get the JWT payload
+    jti = jwt_payload["jti"]  # Extract the JTI from the payload
     token = TokenBlocklist(jti=jti)
     db.session.add(token)
     db.session.commit()
