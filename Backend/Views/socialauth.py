@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_mail import Message
 from flask_jwt_extended import create_access_token
-from models import db, User
-from extensions import mail
+from Backend.models import db, User
+from Backend.extensions import mail
 import logging
 
 social_bp = Blueprint("social_bp", __name__)
@@ -38,7 +38,8 @@ def social_login():
             db.session.rollback()
             return jsonify({"error": "Database error", "details": str(e)}), 500
 
-    access_token = create_access_token(identity={"id": user.id, "email": user.email})
+    access_token = create_access_token(identity=str(user.id))
+
 
     logging.info(f"Access token generated for user: {user.id}")
 

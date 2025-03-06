@@ -25,7 +25,7 @@ const ProfileForm = () => {
     // Check if user already has a profile
     const checkProfile = async () => {
       try {
-        const response = await fetch(`https://final-project-p5.onrender.com/profile/${user.id}`);
+        const response = await fetch(`http://127.0.0.1:5000/profile/${user.id}`);
         const data = await response.json();
 
         if (response.ok && data.profile_exists) {
@@ -63,7 +63,7 @@ const ProfileForm = () => {
     };
 
     try {
-      const response = await fetch("https://final-project-p5.onrender.com/profile", {
+      const response = await fetch("http://127.0.0.1:5000/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -72,7 +72,7 @@ const ProfileForm = () => {
       if (!response.ok) throw new Error("Failed to submit profile");
 
       // ✅ Update `profiles_completed` in user table
-      await fetch(`https://final-project-p5.onrender.com/users/${user.id}`, {
+      await fetch(`http://127.0.0.1:5000/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profiles_completed: true }),

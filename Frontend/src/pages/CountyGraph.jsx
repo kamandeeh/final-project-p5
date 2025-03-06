@@ -10,7 +10,7 @@ const CountyBarChart = () => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    fetch("https://final-project-p5.onrender.com/records") 
+    fetch("http://127.0.0.1:5000/records") 
       .then(res => res.json())
       .then(records => {
         if (!records || records.length === 0) {
@@ -38,7 +38,7 @@ const CountyBarChart = () => {
   useEffect(() => {
     if (selectedCounty) {
       const encodedCounty = encodeURIComponent(selectedCounty);  // Handle spaces in county names
-      fetch(`https://final-project-p5.onrender.com/county_statistics/${encodedCounty}`)
+      fetch(`http://127.0.0.1:5000/county_statistics/${encodedCounty}`)
         .then(res => res.json())
         .then(stats => {
           if (!stats || stats.length === 0) {

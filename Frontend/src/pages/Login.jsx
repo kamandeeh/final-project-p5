@@ -31,7 +31,7 @@ const Login = () => {
       if (!userId) return;
 
       console.log("Checking profile for user ID:", userId);
-      const response = await fetch(`https://final-project-p5.onrender.com/profile/${userId}`);
+      const response = await fetch(`http://127.0.0.1:5000/profile/${userId}`);
       const data = await response.json();
 
       if (response.ok && data.id) {
@@ -80,7 +80,6 @@ const Login = () => {
     }
   };
 
-  // Handle social login (Google or GitHub)
   const handleSocialAuth = async (provider) => {
     try {
       let result;
@@ -89,21 +88,29 @@ const Login = () => {
       } else if (provider === "github") {
         result = await signInWithGithub();
       }
-
-      if (!result) throw new Error("Social login failed");
-
+  
+      if (!result || !result.user) {
+        throw new Error("Social login failed: No user data received.");
+      }
+  
+      // Ensure `getIdToken` exists before calling it
+      if (!result.user.getIdToken) {
+        console.error("getIdToken is not a function. User object:", result.user);
+        throw new Error("Invalid Firebase user object.");
+      }
+  
       const token = await result.user.getIdToken(); // Get Firebase token
       console.log("Sending request with token:", token);
-
-      const response = await fetch("https://final-project-p5.onrender.com/social-login", {
+  
+      const response = await fetch("http://127.0.0.1:5000/social_login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
       });
-
+  
       const data = await response.json();
       console.log("Backend Response:", data);
-
+  
       if (response.ok && data.user_id) {
         setUser({ id: data.user_id, email: result.user.email }); // Set user in context
         toast.success("Social login successful!");
@@ -112,10 +119,11 @@ const Login = () => {
         throw new Error(data.message || "Social login failed");
       }
     } catch (error) {
-      console.error("Social Login Error:", error);
+      console.error("❌ Social Login Error:", error);
       toast.error(error.message);
     }
   };
+  
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">

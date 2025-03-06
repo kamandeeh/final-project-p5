@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext } from "react";
-import { listenForAuthChanges, logout as firebaseLogout } from "../../firebase";
+import { listenForAuthChanges, logout as firebaseLogout, sendUserToBackend } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 
 const UserContext = createContext(null);
@@ -26,19 +26,19 @@ export const UserProvider = ({ children }) => {
         setLoading(false);
         return;
       }
-
+      
       setLoading(true);
       try {
-        const response = await fetch("https://final-project-p5.onrender.com/current_user", {
+        const response = await fetch("http://127.0.0.1:5000/current_user", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
+        
         if (!response.ok) {
           console.warn("Unauthorized access, logging out...");
           await logout();
           return;
         }
-
+        
         const userData = await response.json();
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
@@ -49,36 +49,27 @@ export const UserProvider = ({ children }) => {
         setLoading(false);
       }
     };
-
+    
     fetchUser();
   }, [user]);
 
-  // Listen for Firebase auth changes - modified to handle auth state better
+  // Listen for Firebase auth changes - UPDATED to use the new format
   useEffect(() => {
     let isActive = true; // Flag to prevent state updates after unmount
     
-    const unsubscribe = listenForAuthChanges(async (firebaseUser) => {
+    const unsubscribe = listenForAuthChanges((authData) => {
       if (!isActive) return;
       
-      if (firebaseUser) {
-        console.log("Firebase user detected:", firebaseUser);
+      if (authData && authData.user && authData.idToken) {
+        console.log("Firebase auth data received:", authData.user);
         
-        // Get firebase ID token
-        try {
-          const idToken = await firebaseUser.getIdToken();
-          
-          if (isActive && idToken) {
-            // Only try social login if we don't already have a valid user
-            if (!user) {
-              socialLogin(idToken);
-            }
-          }
-        } catch (error) {
-          console.error("Error getting Firebase ID token:", error);
+        // Only try social login if we don't already have a valid user
+        if (!user) {
+          socialLogin(authData.idToken);
         }
       }
     });
-
+    
     return () => {
       isActive = false;
       if (typeof unsubscribe === "function") {
@@ -90,16 +81,19 @@ export const UserProvider = ({ children }) => {
   // Register a new user
   const register = async (userData) => {
     try {
-      const response = await fetch("https://final-project-p5.onrender.com/register", {
+      const response = await fetch("http://127.0.0.1:5000/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
+      
       const data = await response.json();
+      
       if (!response.ok) {
         console.error("Registration failed:", data);
         throw new Error(data.error || "Registration failed");
       }
+      
       return { success: true, data };
     } catch (error) {
       console.error("Registration error:", error);
@@ -110,11 +104,12 @@ export const UserProvider = ({ children }) => {
   // Login user with email & password
   const login = async (email, password) => {
     try {
-      const response = await fetch("https://final-project-p5.onrender.com/login", {
+      const response = await fetch("http://127.0.0.1:5000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+      
       const data = await response.json();
       console.log("Login API response:", data);
       
@@ -125,10 +120,12 @@ export const UserProvider = ({ children }) => {
           email: data.user.email,
           is_admin: data.user.is_admin || false,
         };
+        
         console.log("User data before setting state:", userData);
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", data.access_token);
+        
         return { success: true };
       } else {
         console.error("Login failed:", data.error);
@@ -140,7 +137,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // Social login using Firebase ID token - improved error handling and logging
+  // Social login using Firebase ID token - UPDATED to accept token directly
   const socialLogin = async (idToken) => {
     console.log("ID Token received:", idToken ? `${idToken.substring(0, 10)}...` : null);
     
@@ -148,10 +145,10 @@ export const UserProvider = ({ children }) => {
       console.error("Error: ID Token is missing or empty!");
       return { success: false, error: "ID Token is missing" };
     }
-
+    
     try {
       console.log("Making social login request...");
-      const response = await fetch("https://final-project-p5.onrender.com/social_login", {
+      const response = await fetch("http://127.0.0.1:5000/social_login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,7 +156,7 @@ export const UserProvider = ({ children }) => {
         },
         credentials: "include", // Ensure cookies are sent and received
       });
-
+      
       console.log("Social login response status:", response.status);
       
       // Log the raw response for debugging
@@ -174,25 +171,25 @@ export const UserProvider = ({ children }) => {
         console.error("Failed to parse response as JSON:", e);
         throw new Error("Invalid server response format");
       }
-
+      
       if (!response.ok || !data) {
         throw new Error(data?.message || `Server error: ${response.status}`);
       }
-
+      
       console.log("Social login successful:", data);
       
       // Ensure we have all required fields
       if (!data.user_id) {
         throw new Error("Server response missing user ID");
       }
-
+      
       const userData = {
         id: data.user_id,
         username: data.username || "User", // Provide fallback if missing
         email: data.email,
         is_admin: data.is_admin || false,
       };
-
+      
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
       localStorage.setItem("token", data.access_token);
@@ -221,7 +218,7 @@ export const UserProvider = ({ children }) => {
     
     try {
       console.log("Checking user profile for ID:", userId);
-      const response = await fetch(`https://final-project-p5.onrender.com/profile/${userId}`);
+      const response = await fetch(`http://127.0.0.1:5000/profile/${userId}`);
       
       console.log("Profile check response status:", response.status);
       
@@ -245,7 +242,7 @@ export const UserProvider = ({ children }) => {
     }
     
     try {
-      const response = await fetch(`https://final-project-p5.onrender.com/users/${userId}`, {
+      const response = await fetch(`http://127.0.0.1:5000/users/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -286,7 +283,7 @@ export const UserProvider = ({ children }) => {
       if (token) {
         // Try to notify the backend about logout
         try {
-          await fetch("https://final-project-p5.onrender.com/logout", {
+          await fetch("http://127.0.0.1:5000/logout", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,

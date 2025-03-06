@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 const AdminLogin = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -12,29 +13,30 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setIsLoading(true);
+    
     try {
-      // Send POST request to Flask backend
-      const response = await fetch("https://final-project-p5.onrender.com/admin/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
+        // Updated to match the route in your Flask app
+        const response = await fetch("http://127.0.0.1:5000/admin/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+            credentials: "include",
+          });
+          
       if (!response.ok) {
-        throw new Error("Invalid credentials");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Login failed");
       }
-
+      
       const data = await response.json();
       const { token, is_admin } = data;
-
-      // Store JWT token and is_admin flag in localStorage
+      
       localStorage.setItem("token", token);
       localStorage.setItem("is_admin", is_admin);
-
-      // If admin, redirect to admin dashboard
+      
       if (is_admin) {
         navigate("/admin-dashboard");
       } else {
@@ -42,6 +44,8 @@ const AdminLogin = () => {
       }
     } catch (error) {
       setError(error.message || "Something went wrong.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -53,29 +57,35 @@ const AdminLogin = () => {
           {error && <p className="text-danger text-center mb-4">{error}</p>}
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Email"
-                required
-                className="form-control"
+              <input 
+                type="email" 
+                name="email" 
+                value={formData.email} 
+                onChange={handleChange} 
+                placeholder="Email" 
+                required 
+                className="form-control" 
+                disabled={isLoading}
               />
             </div>
             <div className="mb-3">
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Password"
-                required
-                className="form-control"
+              <input 
+                type="password" 
+                name="password" 
+                value={formData.password} 
+                onChange={handleChange} 
+                placeholder="Password" 
+                required 
+                className="form-control" 
+                disabled={isLoading}
               />
             </div>
-            <button type="submit" className="btn btn-primary w-100">
-              Login
+            <button 
+              type="submit" 
+              className="btn btn-primary w-100" 
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Login"}
             </button>
           </form>
         </div>

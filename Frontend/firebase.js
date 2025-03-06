@@ -1,4 +1,3 @@
-// firebase.js (Frontend)
 import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   getAuth,
@@ -20,43 +19,43 @@ const firebaseConfig = {
   measurementId: "G-V6N9PXQXNB"
 };
 
+// Initialize Firebase
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 const analytics = getAnalytics(app);
 
+// Setup auth providers
 const googleProvider = new GoogleAuthProvider();
 const githubProvider = new GithubAuthProvider();
 
-export const signInWithGoogle = async () => {
+export const signInWithGoogle = async (setUser = null) => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    const firebaseUser = result.user;
-    console.log("Google Login Success:", firebaseUser);
-
-    if (firebaseUser && typeof firebaseUser.getIdToken === 'function') {
-      await sendUserToBackend(firebaseUser);
-    } else {
-      console.error("Firebase User object does not have getIdToken method.");
-    }
+    console.log("✅ Google Auth Result:", result);
+    await sendUserToBackend(result.user, setUser);
+    return result.user;
   } catch (error) {
-    console.error("Google Login Error:", error.message);
+    console.error("Google login failed:", error);
+    return null;
   }
 };
 
-
-export const signInWithGithub = async () => {
+export const signInWithGithub = async (setUser = null) => {
   try {
     const result = await signInWithPopup(auth, githubProvider);
     console.log("GitHub Login Success:", result.user);
-    await sendUserToBackend(result.user);
+    await sendUserToBackend(result.user, setUser);
 
     if (window.opener) {
       window.close();
     } else {
       console.warn("Window close blocked by COOP policy.");
     }
+    
+    return result.user;
   } catch (error) {
     console.error("GitHub Login Error:", error.message);
+    return null;
   }
 };
 
@@ -64,22 +63,32 @@ export const logout = async () => {
   try {
     await signOut(auth);
     console.log("User logged out from Firebase");
+    return true;
   } catch (error) {
     console.error("Firebase logout error:", error.message);
+    return false;
   }
 };
 
-async function sendUserToBackend(user, setUser) {
+export async function sendUserToBackend(user, setUser = null) {
   try {
-    if (!user || !user.getIdToken) {
-      console.error("Invalid Firebase user object:", user);
+    console.log("Sending user to backend:", user);
+
+    if (!user) {
+      console.error("No user provided to sendUserToBackend");
+      return;
+    }
+
+    // Check if user has getIdToken method
+    if (typeof user.getIdToken !== "function") {
+      console.error("Invalid Firebase user object (No getIdToken method)", user);
       return;
     }
 
     const token = await user.getIdToken();
-    console.log("Sending request with token:", token);
+    console.log("Firebase ID Token generated successfully");
 
-    const response = await fetch("https://final-project-p5.onrender.com/social_login", {
+    const response = await fetch("http://127.0.0.1:5000/social_login", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({
@@ -92,23 +101,26 @@ async function sendUserToBackend(user, setUser) {
     if (!response.ok) throw new Error(`Backend error: ${response.statusText}`);
 
     const data = await response.json();
-    console.log("Backend Response:", data);
+    console.log("✅ Backend Response:", data);
 
     if (!data.user_id) {
       console.error("Backend did not return a valid user_id!");
       return;
     }
 
-    if (setUser) {
+    if (setUser && typeof setUser === "function") {
       setUser({
         email: user.email,
         displayName: user.displayName,
         uid: user.uid,
-        user_id: data.user_id, // ✅ Correctly store user_id, NOT uid
+        user_id: data.user_id, 
       });
     }
+    
+    return data;
   } catch (error) {
     console.error("Error sending user data to backend:", error);
+    return null;
   }
 }
 
@@ -119,7 +131,7 @@ export const listenForAuthChanges = (setUser) => {
       await sendUserToBackend(user, setUser);
     } else {
       console.log("No user logged in.");
-      if (setUser) {
+      if (setUser && typeof setUser === "function") {
         setUser(null);
       }
     }
