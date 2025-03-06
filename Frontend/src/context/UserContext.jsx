@@ -15,63 +15,77 @@ export const UserProvider = ({ children }) => {
     if (storedUser && storedUser.id) {
       setUser(storedUser);
     }
+    setLoading(false); // Set loading to false after initial check
   }, []);
 
-  // Fetch user details using stored token
+  // Fetch user details using stored token - only if user is null but token exists
   useEffect(() => {
     const fetchUser = async () => {
-      setLoading(true);
       const token = localStorage.getItem("token");
-
-      if (!token) {
-        console.warn("No token found, logging out...");
-        logout();
+      if (!token || user) {
+        setLoading(false);
         return;
       }
 
+      setLoading(true);
       try {
         const response = await fetch("https://final-project-p5.onrender.com/current_user", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
+        
         if (!response.ok) {
           console.warn("Unauthorized access, logging out...");
-          logout();
+          await logout();
           return;
         }
-
+        
         const userData = await response.json();
         setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData)); // Save user in localStorage
+        localStorage.setItem("user", JSON.stringify(userData));
       } catch (error) {
         console.error("Error fetching user:", error);
-        logout();
+        await logout();
       } finally {
         setLoading(false);
       }
     };
 
     fetchUser();
-  }, []);
+  }, [user]);
 
-  // Listen for Firebase auth changes
+  // Listen for Firebase auth changes - modified to handle auth state better
   useEffect(() => {
-    const unsubscribe = listenForAuthChanges((firebaseUser) => {
+    let isActive = true; // Flag to prevent state updates after unmount
+    
+    const unsubscribe = listenForAuthChanges(async (firebaseUser) => {
+      if (!isActive) return;
+      
       if (firebaseUser) {
         console.log("Firebase user detected:", firebaseUser);
-        setUser(firebaseUser);
-      } else {
-        console.warn("No Firebase user, logging out...");
-        logout();
+        
+        // Get firebase ID token
+        try {
+          const idToken = await firebaseUser.getIdToken();
+          
+          if (isActive && idToken) {
+            // Only try social login if we don't already have a valid user
+            if (!user) {
+              socialLogin(idToken);
+            }
+          }
+        } catch (error) {
+          console.error("Error getting Firebase ID token:", error);
+        }
       }
     });
 
     return () => {
+      isActive = false;
       if (typeof unsubscribe === "function") {
         unsubscribe();
       }
     };
-  }, []);
+  }, [user]);
 
   // Register a new user
   const register = async (userData) => {
@@ -81,13 +95,11 @@ export const UserProvider = ({ children }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
-
       const data = await response.json();
       if (!response.ok) {
         console.error("Registration failed:", data);
         throw new Error(data.error || "Registration failed");
       }
-
       return { success: true, data };
     } catch (error) {
       console.error("Registration error:", error);
@@ -103,10 +115,9 @@ export const UserProvider = ({ children }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await response.json();
       console.log("Login API response:", data);
-
+      
       if (response.ok && data.user) {
         const userData = {
           id: data.user.id,
@@ -114,13 +125,10 @@ export const UserProvider = ({ children }) => {
           email: data.user.email,
           is_admin: data.user.is_admin || false,
         };
-
         console.log("User data before setting state:", userData);
-
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", data.access_token);
-
         return { success: true };
       } else {
         console.error("Login failed:", data.error);
@@ -132,44 +140,70 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // Social login using Firebase ID token
+  // Social login using Firebase ID token - improved error handling and logging
   const socialLogin = async (idToken) => {
-    console.log("ID Token received:", idToken);
-
+    console.log("ID Token received:", idToken ? `${idToken.substring(0, 10)}...` : null);
+    
     if (!idToken) {
       console.error("Error: ID Token is missing or empty!");
       return { success: false, error: "ID Token is missing" };
     }
 
     try {
+      console.log("Making social login request...");
       const response = await fetch("https://final-project-p5.onrender.com/social_login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${idToken}`,
         },
+        credentials: "include", // Ensure cookies are sent and received
       });
 
-      const data = await response.json().catch(() => null);
+      console.log("Social login response status:", response.status);
+      
+      // Log the raw response for debugging
+      const rawResponse = await response.text();
+      console.log("Raw social login response:", rawResponse);
+      
+      // Parse the response into JSON
+      let data;
+      try {
+        data = JSON.parse(rawResponse);
+      } catch (e) {
+        console.error("Failed to parse response as JSON:", e);
+        throw new Error("Invalid server response format");
+      }
+
       if (!response.ok || !data) {
         throw new Error(data?.message || `Server error: ${response.status}`);
       }
 
       console.log("Social login successful:", data);
+      
+      // Ensure we have all required fields
+      if (!data.user_id) {
+        throw new Error("Server response missing user ID");
+      }
 
       const userData = {
         id: data.user_id,
-        username: data.username,
+        username: data.username || "User", // Provide fallback if missing
         email: data.email,
-        is_admin: data.is_admin,
+        is_admin: data.is_admin || false,
       };
 
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
       localStorage.setItem("token", data.access_token);
-
-      await checkUserProfile(data.user_id); // Redirect user accordingly
-
+      
+      // Only check profile if we have a user_id
+      if (data.user_id) {
+        await checkUserProfile(data.user_id);
+      } else {
+        navigate("/profile-form");
+      }
+      
       return { success: true };
     } catch (error) {
       console.error("Social login error:", error);
@@ -179,8 +213,18 @@ export const UserProvider = ({ children }) => {
 
   // Check if user has a profile and redirect accordingly
   const checkUserProfile = async (userId) => {
+    if (!userId) {
+      console.error("Cannot check profile: User ID is missing");
+      navigate("/profile-form");
+      return;
+    }
+    
     try {
+      console.log("Checking user profile for ID:", userId);
       const response = await fetch(`https://final-project-p5.onrender.com/profile/${userId}`);
+      
+      console.log("Profile check response status:", response.status);
+      
       if (response.ok) {
         navigate("/");
       } else {
@@ -188,13 +232,18 @@ export const UserProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Error checking profile:", error);
+      navigate("/profile-form");
     }
   };
 
   // Update user profile
   const updateUser = async (userId, updatedData) => {
     const token = localStorage.getItem("token");
-
+    if (!token) {
+      console.error("No token available for user update");
+      return { success: false, error: "Authentication required" };
+    }
+    
     try {
       const response = await fetch(`https://final-project-p5.onrender.com/users/${userId}`, {
         method: "PUT",
@@ -204,30 +253,70 @@ export const UserProvider = ({ children }) => {
         },
         body: JSON.stringify(updatedData),
       });
-
+      
       if (!response.ok) {
-        throw new Error("Failed to update user");
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        throw new Error(errorData.message || "Failed to update user");
       }
-
+      
       const data = await response.json();
       console.log("User updated:", data);
+      
+      // Update local user data if available
+      if (data.user) {
+        const updatedUser = {
+          ...user,
+          ...data.user
+        };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+      
+      return { success: true, data };
     } catch (error) {
       console.error("Error updating user:", error);
+      return { success: false, error: error.message };
     }
   };
 
   // Logout user
   const logout = async () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
     try {
-      await firebaseLogout();
+      const token = localStorage.getItem("token");
+      if (token) {
+        // Try to notify the backend about logout
+        try {
+          await fetch("https://final-project-p5.onrender.com/logout", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }
+          });
+        } catch (e) {
+          console.warn("Failed to notify server about logout:", e);
+        }
+      }
+      
+      // Always clear local storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      
+      // Try Firebase logout
+      try {
+        await firebaseLogout();
+      } catch (error) {
+        console.error("Firebase Logout Error:", error);
+      }
+      
+      // Always clear user state
+      setUser(null);
+      
+      return { success: true };
     } catch (error) {
       console.error("Logout Error:", error);
+      return { success: false, error: error.message };
     }
-
-    setUser(null);
   };
 
   return (

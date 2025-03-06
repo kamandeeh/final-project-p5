@@ -30,12 +30,19 @@ const githubProvider = new GithubAuthProvider();
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    console.log("Google Login Success:", result.user);
-    await sendUserToBackend(result.user);
+    const firebaseUser = result.user;
+    console.log("Google Login Success:", firebaseUser);
+
+    if (firebaseUser && typeof firebaseUser.getIdToken === 'function') {
+      await sendUserToBackend(firebaseUser);
+    } else {
+      console.error("Firebase User object does not have getIdToken method.");
+    }
   } catch (error) {
     console.error("Google Login Error:", error.message);
   }
 };
+
 
 export const signInWithGithub = async () => {
   try {
@@ -64,6 +71,11 @@ export const logout = async () => {
 
 async function sendUserToBackend(user, setUser) {
   try {
+    if (!user || !user.getIdToken) {
+      console.error("Invalid Firebase user object:", user);
+      return;
+    }
+
     const token = await user.getIdToken();
     console.log("Sending request with token:", token);
 
@@ -99,6 +111,7 @@ async function sendUserToBackend(user, setUser) {
     console.error("Error sending user data to backend:", error);
   }
 }
+
 export const listenForAuthChanges = (setUser) => {
   return onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -107,7 +120,7 @@ export const listenForAuthChanges = (setUser) => {
     } else {
       console.log("No user logged in.");
       if (setUser) {
-          setUser(null);
+        setUser(null);
       }
     }
   });

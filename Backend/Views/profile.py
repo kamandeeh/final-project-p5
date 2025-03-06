@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, Profile, User  # ✅ Import User model
+from Backend.models import db, Profile, User  # ✅ Import User model
 from flask_cors import CORS
 
 profile_bp = Blueprint('profile_bp', __name__)

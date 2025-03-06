@@ -55,12 +55,10 @@ const Login = () => {
       const result = await login(email, password);
       console.log("Login response:", result);
 
-      if (result?.success) {
+      if (result?.user) {
         toast.success("Login successful! Redirecting...");
         setTimeout(() => {
-          const storedUser = JSON.parse(localStorage.getItem("user"));
-          console.log("Stored User after login:", storedUser);
-
+          const storedUser = result.user;  // Use the user returned by the login function
           if (storedUser?.id) {
             checkUserProfile(storedUser.id);
           } else {
@@ -69,7 +67,7 @@ const Login = () => {
           }
         }, 1000);
       } else {
-        throw new Error(result?.error || "Login failed");
+        throw new Error(result?.message || "Login failed");
       }
     } catch (err) {
       console.error("Login Error:", err);
@@ -94,9 +92,12 @@ const Login = () => {
 
       const response = await fetch("https://final-project-p5.onrender.com/social-login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ token }),
       });
+      
 
       const data = await response.json();
       console.log("Backend Response:", data);
