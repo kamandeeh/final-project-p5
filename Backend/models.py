@@ -24,11 +24,21 @@ class User(db.Model):
     profile = db.relationship('Profile', backref='user', uselist=False, cascade='all, delete')
 
     def set_password(self, password):
-        """Hashes and stores the password."""
-        self.password_hash = generate_password_hash(password)
+        """Hash and set the user's password"""
+        if password:  # Add validation to ensure password isn't empty
+            self.password = generate_password_hash(password)
+        else:
+            raise ValueError("Password cannot be empty")
+    
 
+   # In your Backend/models.py file
     def check_password(self, password):
-        """Checks if the provided password matches the stored hash."""
+        """Check if the provided password matches the stored hash."""
+        # First check if self.password exists
+        if self.password is None:
+            # Return False if there's no password stored
+            # You might also want to log this situation for security audit
+            return False
         return check_password_hash(self.password, password)
     
     def to_dict(self):

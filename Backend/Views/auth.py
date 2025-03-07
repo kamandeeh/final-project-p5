@@ -34,34 +34,29 @@ def register():
 
     return jsonify({"msg": "User registered successfully!"}), 201
 
-@auth_bp.route("/login", methods=["POST"])
+@auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    email = data.get("email")
-    password = data.get("password")
-
-    user = User.query.filter_by(email=email).first()
+    username = data.get('username')
+    password = data.get('password')
+    
+    user = User.query.filter_by(username=username).first()
     
     if not user:
-        return jsonify({"error": "User not found"}), 404  
-
-    if not user.check_password(password):
-        return jsonify({"error": "Invalid credentials"}), 401
-
-    logging.info("User found: ID=%s, Email=%s", user.id, user.email)
-
-    # Generate JWT token
-    access_token = create_access_token(identity=user.id)
-
-    return jsonify({
-        "access_token": access_token,
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "username": user.username,
-        }
-    })
-
+        return jsonify({"error": "Invalid username or password"}), 401
+    
+    # Add logging to debug password issues
+    if user.password is None:
+        logging.error(f"User {username} has NULL password in database")
+        return jsonify({"error": "Account requires password reset"}), 401
+    
+    try:
+        if not user.check_password(password):
+            return jsonify({"error": "Invalid username or password"}), 401
+    except Exception as e:
+        logging.error(f"Password check error for user {username}: {str(e)}")
+        return jsonify({"error": "Authentication error"}), 500
+        
 @auth_bp.route("/auth/firebase", methods=["POST"])
 def firebase_auth():
     data = request.get_json()
