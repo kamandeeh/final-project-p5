@@ -85,7 +85,6 @@ app.register_blueprint(record_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(social_bp)
-app.register_blueprint(mpesa_bp)
 app.register_blueprint(county_stats_bp)
 app.register_blueprint(contact_bp)
 
