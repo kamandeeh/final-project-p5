@@ -78,7 +78,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER")
 mail.init_app(app)
 
 # Import and Register Blueprints
-from .Views import *
+from Views import *
 
 app.register_blueprint(user_bp)
 app.register_blueprint(record_bp)
