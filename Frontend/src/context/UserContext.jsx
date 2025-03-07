@@ -101,41 +101,58 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // Login user with email & password
-  const login = async (email, password) => {
-    try {
-      const response = await fetch("https://final-project-p5.onrender.com/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      
-      const data = await response.json();
-      console.log("Login API response:", data);
-      
-      if (response.ok && data.user) {
-        const userData = {
-          id: data.user.id,
-          username: data.user.username,
-          email: data.user.email,
-          is_admin: data.user.is_admin || false,
-        };
-        
-        console.log("User data before setting state:", userData);
-        setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("token", data.access_token);
-        
-        return { success: true };
-      } else {
-        console.error("Login failed:", data.error);
-        throw new Error(data.error || "Login failed");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      return { success: false, error: error.message };
+// This is the problematic login function from your UserContext
+const login = async (email, password) => {
+  try {
+    const response = await fetch("https://final-project-p5.onrender.com/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    
+    // Get raw text first to handle non-JSON responses
+    const responseText = await response.text();
+    
+    // Check if it looks like HTML (indicating an error page)
+    if (responseText.trim().startsWith('<!doctype') || responseText.trim().startsWith('<html')) {
+      console.error("Server returned HTML instead of JSON:", responseText.substring(0, 100));
+      throw new Error("The server returned an error page instead of JSON. Please try again later.");
     }
-  };
+    
+    // Now parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("Failed to parse response as JSON:", parseError);
+      throw new Error("Server returned invalid data format. Please contact support.");
+    }
+    
+    console.log("Login API response:", data);
+    
+    if (response.ok && data.user) {
+      const userData = {
+        id: data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        is_admin: data.user.is_admin || false,
+      };
+      
+      console.log("User data before setting state:", userData);
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("token", data.access_token);
+      
+      return { success: true };
+    } else {
+      console.error("Login failed:", data.error);
+      throw new Error(data.error || "Login failed");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    return { success: false, error: error.message };
+  }
+};
 
   // Social login using Firebase ID token - UPDATED to accept token directly
   const socialLogin = async (idToken) => {

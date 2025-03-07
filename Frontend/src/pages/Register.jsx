@@ -3,6 +3,7 @@ import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { signInWithGoogle, signInWithGithub } from "../../firebase";
 import { BsGoogle, BsGithub } from "react-icons/bs";
+import {toast} from "react-toastify"
 
 const SignupPage = () => {
   const { register } = useUser();
@@ -34,40 +35,58 @@ const SignupPage = () => {
     }
   };
 
-  const handleSocialAuth = async (provider, providerName) => {
+  const handleSocialAuth = async (provider) => {
     try {
-      const user = await provider();
-      if (user) {
-        console.log("Social auth user:", user); // Debugging  
-  
-        const response = await fetch("https://final-project-p5.onrender.com/social_login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: user.displayName || "", 
-            email: user.email,
-            uid: user.uid,  // Add this line
-            provider: providerName,
-          }),
-        });
-  
-        const responseData = await response.json();
-        console.log("Backend response:", responseData); // Debugging  
-  
-        if (!response.ok) {
-          throw new Error(responseData.error || "Failed to store user data");
-        }
-  
-        setSuccess("Signup successful! Redirecting...");
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
+      let result;
+      if (provider === "google") {
+        result = await signInWithGoogle();
+      } else if (provider === "github") {
+        result = await signInWithGithub();
       }
-    } catch (err) {
-      console.error("Social auth error:", err); // Debugging
-      setError(err.message);
+  
+      if (!result || !result.user) {
+        throw new Error("❌ Social login failed: No user data received.");
+      }
+  
+      const { email, displayName, uid } = result.user;
+      console.log("✅ User info from Firebase:", { email, displayName, uid });
+  
+      const response = await fetch("https://final-project-p5.onrender.com/social_login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          username: displayName || "Anonymous",
+          uid,
+        }),
+      });
+  
+      // Get raw response first
+      const text = await response.text();
+      console.log("📩 Raw Backend Response:", text);
+  
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        throw new Error("❌ Server returned invalid JSON. Check backend logs.");
+      }
+  
+      console.log("✅ Parsed Backend Response:", data);
+  
+      if (response.ok && data.user_id) {
+        setUser({ id: data.user_id, email });
+        toast.success("🎉 Social login successful!");
+        checkUserProfile(data.user_id);
+      } else {
+        throw new Error(data.error || "❌ Social login failed.");
+      }
+    } catch (error) {
+      console.error("❌ Social Login Error:", error);
+      toast.error(error.message);
     }
   };
+  
   
 
   return (

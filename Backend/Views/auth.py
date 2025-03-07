@@ -1,15 +1,18 @@
 from flask import jsonify, request, Blueprint
-from Backend.models import db, User, TokenBlocklist
-from werkzeug.security import generate_password_hash
+from models import db, User, TokenBlocklist
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import auth
+import logging
+
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
 
 auth_bp = Blueprint("auth_bp", __name__)
 CORS(auth_bp, supports_credentials=True)
-
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -20,13 +23,14 @@ def register():
 
     # Check if user already exists
     if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
-        return jsonify({"error": "Username/email exists"}), 406
+        return jsonify({"error": "Username/email exists"}), 409
 
     # Create new user with hashed password
     new_user = User(username=username, email=email)
     new_user.set_password(password)  # Hash password before saving
     db.session.add(new_user)
     db.session.commit()
+    logging.info("User registered: %s", username)
 
     return jsonify({"msg": "User registered successfully!"}), 201
 
@@ -44,8 +48,7 @@ def login():
     if not user.check_password(password):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    print("User found:", user) 
-    print("User ID:", user.id)  
+    logging.info("User found: ID=%s, Email=%s", user.id, user.email)
 
     # Generate JWT token
     access_token = create_access_token(identity=user.id)
@@ -90,31 +93,23 @@ def firebase_auth():
         }), 200
 
     except Exception as e:
-        print("Firebase Auth Error:", str(e)) 
+        logging.error("Firebase Auth Error: %s", str(e)) 
         return jsonify({"error": "Invalid Firebase token or authentication failed"}), 400
 
 @auth_bp.route("/current_user", methods=["GET"])
 @jwt_required()
 def current_user():
-    try:
-        current_user_id = get_jwt_identity()
-        print("User ID from token:", current_user_id)
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
-        user = User.query.get(current_user_id)
-        if not user:
-            return jsonify({"error": "User not found"}), 404
+    return jsonify({
+        'id': user.id,
+        'username': user.username,
+        'email': user.email
+    }), 200
 
-        return jsonify({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email
-        }), 200
-
-    except Exception as e:
-        print("Error in /current_user:", str(e)) 
-        return jsonify({"error": "Invalid token or request"}), 422
-
-# ✅ Fix Logout
 @auth_bp.route("/logout", methods=["DELETE"])
 @jwt_required()
 def logout():
@@ -122,4 +117,5 @@ def logout():
     now = datetime.now(timezone.utc)
     db.session.add(TokenBlocklist(jti=jti, created_at=now))
     db.session.commit()
-    return jsonify({"success": "Logged out successfully"})
+    logging.info("User logged out: ID=%s", get_jwt_identity())
+    return jsonify({"success": "Logged out successfully"}), 200
